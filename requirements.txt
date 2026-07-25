@@ -5,6 +5,8 @@ requests
 # django-debug-toolbar==4.2.0
 pillow==10.2.0
 
+python-decouple
+
 # # database 
 # mysqlclient
 
