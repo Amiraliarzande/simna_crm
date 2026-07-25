@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{% if customer %}ویرایش مشتری{% else %}مشتری جدید{% endif %}{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'customers:customer-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">{% if customer %}ویرایش مشتری{% else %}مشتری جدید{% endif %}</h2>
+    <p class="text-xs text-gray-400 mt-0.5">اطلاعات مشتری را وارد کنید</p>
+  </div>
+</div>
+
+<div class="max-w-lg mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+    
+    {% for field in form %}
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ field.errors|first }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="flex items-center gap-3 pt-2">
+      <button type="submit"
+        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+        {% if customer %}ذخیره تغییرات{% else %}ثبت مشتری{% endif %}
+      </button>
+      <a href="{% url 'customers:customer-list' %}"
+        class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+        انصراف
+      </a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

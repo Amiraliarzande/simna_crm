@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}مشتریان{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+      <span class="material-icons">groups</span>
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">لیست مشتریان</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ customers|length }} مشتری ثبت شده</p>
+    </div>
+  </div>
+  <a href="{% url 'customers:customer-create' %}"
+    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+    <span class="material-icons text-lg">add</span>
+    مشتری جدید
+  </a>
+</div>
+
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="bg-gray-50 text-gray-500 text-xs">
+        <th class="px-5 py-3 text-right font-medium">نام</th>
+        <th class="px-5 py-3 text-right font-medium">شرکت</th>
+        <th class="px-5 py-3 text-right font-medium">ایمیل</th>
+        <th class="px-5 py-3 text-right font-medium">نوع مشتری</th>
+        <th class="px-5 py-3 text-right font-medium">وضعیت</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for customer in customers %}
+      <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition">
+        <td class="px-5 py-3.5">
+          <a href="{% url 'customers:customer-detail' customer.pk %}" class="flex items-center gap-3 group">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">
+              {{ customer.full_name|slice:":1"|upper }}
+            </div>
+            <span class="font-medium text-gray-700 group-hover:text-indigo-600 transition">{{ customer.full_name }}</span>
+          </a>
+        </td>
+        <td class="px-5 py-3.5 text-gray-500">{{ customer.company|default:"-" }}</td>
+        <td class="px-5 py-3.5 text-gray-500">{{ customer.email|default:"-" }}</td>
+        <td class="px-5 py-3.5">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium 
+            {% if customer.customer_type == 'vip' %}bg-amber-50 text-amber-700
+            {% elif customer.customer_type == 'platinum' %}bg-purple-50 text-purple-700
+            {% elif customer.customer_type == 'gold' %}bg-yellow-50 text-yellow-700
+            {% else %}bg-gray-50 text-gray-600{% endif %}">
+            {{ customer.get_customer_type_display }}
+          </span>
+        </td>
+        <td class="px-5 py-3.5">
+          {% if customer.is_active %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>فعال
+          </span>
+          {% else %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>غیرفعال
+          </span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">
+          <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mb-3">
+              <span class="material-icons text-3xl">groups</span>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">مشتریای ثبت نشده است.</p>
+            <a href="{% url 'customers:customer-create' %}" class="text-sm text-indigo-600 font-medium hover:underline">افزودن مشتری جدید</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
