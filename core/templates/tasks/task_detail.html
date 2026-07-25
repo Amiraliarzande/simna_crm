@@ -1,10 +1,149 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ task.title }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <a href="{% url 'tasks:task-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+      <span class="material-icons text-lg">arrow_forward</span>
+    </a>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">{{ task.title }}</h2>
+      <p class="text-xs text-gray-400 mt-0.5">ایجاد شده توسط {{ task.created_by.get_full_name|default:task.created_by.username }}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    {% if can_edit %}
+    <a href="{% url 'tasks:task-edit' task.pk %}" 
+       class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      ویرایش
+    </a>
+    {% endif %}
+    {% if task.created_by == user %}
+    <a href="{% url 'tasks:task-delete' task.pk %}" 
+       class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      حذف
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- اطلاعات وظیفه -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">اولویت</p>
+    <p><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium {{ task.priority_color }}">{{ task.get_priority_display }}</span></p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">وضعیت</p>
+    <p>
+      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+        {% if task.status == 'pending' %}bg-yellow-100 text-yellow-700
+        {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-700
+        {% elif task.status == 'completed' %}bg-emerald-100 text-emerald-700
+        {% elif task.status == 'cancelled' %}bg-gray-100 text-gray-600
+        {% elif task.status == 'deferred' %}bg-purple-100 text-purple-700
+        {% else %}bg-gray-100 text-gray-600{% endif %}">
+        {{ task.get_status_display }}
+      </span>
+    </p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">مسئول</p>
+    <p class="font-medium">
+      {% if task.assigned_to.all %}
+        {% for user in task.assigned_to.all %}
+          {{ user.get_full_name|default:user.username }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      {% elif task.assigned_department %}
+        {{ task.assigned_department }}
+      {% else %}
+        -
+      {% endif %}
+    </p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">دسترسی</p>
+    <p><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ task.get_visibility_display }}</span></p>
+  </div>
+</div>
+
+<!-- تغییر وضعیت -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <form method="post" action="{% url 'tasks:task-change-status' task.pk %}" class="flex items-center gap-3">
+    {% csrf_token %}
+    <label class="text-sm text-gray-600">تغییر وضعیت:</label>
+    <select name="status" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+      {% for code, name in task.STATUS_CHOICES %}
+      <option value="{{ code }}" {% if task.status == code %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      اعمال
+    </button>
+  </form>
+</div>
+
+<!-- توضیحات -->
+{% if task.description %}
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-2">توضیحات</h3>
+  <p class="text-sm text-gray-600">{{ task.description }}</p>
+</div>
+{% endif %}
+
+<!-- فایل پیوست -->
+{% if task.attachment %}
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+    <span class="material-icons text-indigo-500">attach_file</span>
+    فایل پیوست
+  </h3>
+  <a href="{{ task.attachment.url }}" target="_blank" class="text-indigo-600 hover:underline text-sm flex items-center gap-1">
+    <span class="material-icons text-sm">download</span>
+    دانلود فایل
+  </a>
+</div>
+{% endif %}
+
+<!-- یادداشت‌ها -->
+{% if task.notes %}
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-2">یادداشت‌ها</h3>
+  <p class="text-sm text-gray-600">{{ task.notes }}</p>
+</div>
+{% endif %}
+
+<!-- نظرات -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+    <span class="material-icons text-indigo-500">comment</span>
+    نظرات ({{ comments.count }})
+  </h3>
+  
+  <!-- فرم نظر جدید -->
+  <form method="post" class="mb-4">
+    {% csrf_token %}
+    {{ form.comment }}
+    <button type="submit" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      ارسال نظر
+    </button>
+  </form>
+  
+  <!-- لیست نظرات -->
+  <div class="space-y-3 max-h-64 overflow-y-auto">
+    {% for comment in comments %}
+    <div class="bg-gray-50 rounded-lg p-3">
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-medium text-gray-700">{{ comment.user.get_full_name|default:comment.user.username }}</p>
+        <p class="text-xs text-gray-400">{{ comment.created_at|date:"Y/m/d H:i" }}</p>
+      </div>
+      <p class="text-sm text-gray-600 mt-1">{{ comment.comment }}</p>
+    </div>
+    {% empty %}
+    <p class="text-sm text-gray-400 text-center py-4">هنوز نظری ثبت نشده است.</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

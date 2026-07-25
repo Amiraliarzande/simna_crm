@@ -1,10 +1,172 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ project.title }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <a href="{% url 'projects:project-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+      <span class="material-icons text-lg">arrow_forward</span>
+    </a>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">{{ project.title }}</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ project.project_number }}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    {% if can_edit %}
+    <a href="{% url 'projects:project-edit' project.pk %}" 
+       class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      ویرایش
+    </a>
+    <a href="{% url 'projects:project-delete' project.pk %}" 
+       class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      حذف
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- اطلاعات پروژه -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">شماره پروژه</p>
+    <p class="font-medium">{{ project.project_number }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">نوع</p>
+    <p><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+      {% if project.project_type == 'internal' %}bg-blue-50 text-blue-700
+      {% else %}bg-purple-50 text-purple-700{% endif %}">
+      {{ project.project_type_display }}
+    </span></p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">وضعیت</p>
+    <p><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium {{ project.status_color }}">
+      {{ project.status_display }}
+    </span></p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">مشتری اصلی</p>
+    <p class="font-medium">{{ project.customer_name }}</p>
+  </div>
+</div>
+
+<!-- تاریخ‌ها -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">تاریخ شروع</p>
+    <p class="font-medium">{{ project.start_date|date:"Y/m/d" }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">تاریخ پایان</p>
+    <p class="font-medium">{{ project.end_date|date:"Y/m/d"|default:"-" }}</p>
+    {% if project.is_overdue %}
+    <span class="text-xs text-rose-500">(دیر شده)</span>
+    {% endif %}
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">تاریخ اتمام واقعی</p>
+    <p class="font-medium">{{ project.actual_end_date|date:"Y/m/d"|default:"-" }}</p>
+  </div>
+</div>
+
+<!-- اعضای پروژه -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-2">اعضای پروژه</h3>
+  <div class="flex flex-wrap gap-2">
+    <!-- کارمندان -->
+    {% for member in project.members.all %}
+    <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
+      <span class="material-icons text-sm">person</span>
+      {{ member.get_full_name|default:member.username }}
+    </span>
+    {% endfor %}
+    <!-- مشتریان عضو -->
+    {% for customer in project.customer_members.all %}
+    <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">
+      <span class="material-icons text-sm">business</span>
+      {{ customer.full_name }} (مشتری)
+    </span>
+    {% endfor %}
+    {% if not project.members.all and not project.customer_members.all %}
+    <p class="text-sm text-gray-400">هیچ عضوی تعیین نشده است.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- دسترسی -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-2">دسترسی</h3>
+  <p><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+    {{ project.visibility_display }}
+  </span></p>
+  {% if project.visibility == 'department' and project.assigned_departments %}
+  <div class="mt-2">
+    <p class="text-xs text-gray-400">دپارتمان‌های دسترسی:</p>
+    <div class="flex flex-wrap gap-1 mt-1">
+      {% for dept in project.assigned_departments.split|slice:":10" %}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
+        {{ dept }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- تغییر وضعیت -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <form method="post" action="{% url 'projects:project-change-status' project.pk %}" class="flex items-center gap-3">
+    {% csrf_token %}
+    <label class="text-sm text-gray-600">تغییر وضعیت:</label>
+    <select name="status" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+      {% for code, name in project.STATUS_CHOICES %}
+      <option value="{{ code }}" {% if project.status == code %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      اعمال
+    </button>
+  </form>
+</div>
+
+<!-- توضیحات -->
+{% if project.description %}
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-2">توضیحات</h3>
+  <p class="text-sm text-gray-600">{{ project.description }}</p>
+</div>
+{% endif %}
+
+<!-- نظرات -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+    <span class="material-icons text-indigo-500">comment</span>
+    نظرات ({{ comments.count }})
+  </h3>
+
+  <form method="post" class="mb-4">
+    {% csrf_token %}
+    {{ form.comment }}
+    <button type="submit" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+      ارسال نظر
+    </button>
+  </form>
+
+  <div class="space-y-3 max-h-64 overflow-y-auto">
+    {% for comment in comments %}
+    <div class="bg-gray-50 rounded-lg p-3">
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-medium text-gray-700">{{ comment.user.get_full_name|default:comment.user.username }}</p>
+        <p class="text-xs text-gray-400">{{ comment.created_at|date:"Y/m/d H:i" }}</p>
+      </div>
+      <p class="text-sm text-gray-600 mt-1">{{ comment.comment }}</p>
+    </div>
+    {% empty %}
+    <p class="text-sm text-gray-400 text-center py-4">هنوز نظری ثبت نشده است.</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

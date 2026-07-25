@@ -1,10 +1,188 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ staff.full_name }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <a href="{% url 'staff:staff-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+      <span class="material-icons text-lg">arrow_forward</span>
+    </a>
+    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 text-base font-bold flex items-center justify-center">
+      {{ staff.full_name|slice:":1"|upper }}
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">{{ staff.full_name }}</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ staff.position_display }}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'staff:staff-edit' staff.pk %}"
+      class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">edit</span>
+      ویرایش
+    </a>
+    {% if staff.user != request.user %}
+    <a href="{% url 'staff:staff-delete' staff.pk %}"
+      class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">delete</span>
+      حذف
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- اطلاعات کارمند -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5 h-fit">
+    <!-- آواتار -->
+    <div class="flex justify-center">
+      {% if staff.avatar %}
+      <img src="{{ staff.avatar.url }}" class="w-24 h-24 rounded-full object-cover border-4 border-indigo-100">
+      {% else %}
+      <div class="w-24 h-24 rounded-full bg-indigo-50 text-indigo-600 text-3xl font-bold flex items-center justify-center">
+        {{ staff.full_name|slice:":1"|upper }}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">person</span>
+      <div>
+        <p class="text-xs text-gray-400">نام کامل</p>
+        <p class="text-sm font-medium text-gray-700">{{ staff.full_name }}</p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">badge</span>
+      <div>
+        <p class="text-xs text-gray-400">سمت</p>
+        <p class="text-sm font-medium text-gray-700">{{ staff.position_display }}</p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">business</span>
+      <div>
+        <p class="text-xs text-gray-400">دپارتمان</p>
+        <p class="text-sm font-medium text-gray-700">{{ staff.department_display }}</p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">call</span>
+      <div>
+        <p class="text-xs text-gray-400">شماره تماس</p>
+        <p class="text-sm font-medium text-gray-700">{{ staff.phone|default:"-" }}</p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">email</span>
+      <div>
+        <p class="text-xs text-gray-400">ایمیل</p>
+        <p class="text-sm font-medium text-gray-700">{{ staff.email|default:"-" }}</p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">toggle_on</span>
+      <div>
+        <p class="text-xs text-gray-400">وضعیت</p>
+        <p class="text-sm font-medium">
+          {% if staff.is_active %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>فعال
+          </span>
+          {% else %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>غیرفعال
+          </span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">calendar_today</span>
+      <div>
+        <p class="text-xs text-gray-400">تاریخ استخدام</p>
+        <p class="text-sm font-medium text-gray-700">{{ staff.hire_date|date:"Y/m/d" }}</p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">history</span>
+      <div>
+        <p class="text-xs text-gray-400">تاریخ ثبت</p>
+        <p class="text-sm font-medium text-gray-700">{{ staff.created_at|date:"Y/m/d H:i" }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="lg:col-span-2 space-y-6">
+    <!-- آدرس -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="material-icons text-indigo-500 text-lg">description</span>
+        آدرس
+      </h3>
+      <p class="text-sm text-gray-500 leading-7">{{ staff.address|default:"آدرسی ثبت نشده است." }}</p>
+    </div>
+
+    <!-- دسترسی‌ها -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="material-icons text-indigo-500 text-lg">lock</span>
+        دسترسی‌ها
+      </h3>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <span class="material-icons text-sm {% if staff.can_manage_staff %}text-emerald-500{% else %}text-gray-300{% endif %}">
+            {% if staff.can_manage_staff %}check_circle{% else %}cancel{% endif %}
+          </span>
+          <span class="text-sm text-gray-600">مدیریت کارکنان</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <span class="material-icons text-sm {% if staff.can_manage_customers %}text-emerald-500{% else %}text-gray-300{% endif %}">
+            {% if staff.can_manage_customers %}check_circle{% else %}cancel{% endif %}
+          </span>
+          <span class="text-sm text-gray-600">مدیریت مشتریان</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <span class="material-icons text-sm {% if staff.can_manage_sales %}text-emerald-500{% else %}text-gray-300{% endif %}">
+            {% if staff.can_manage_sales %}check_circle{% else %}cancel{% endif %}
+          </span>
+          <span class="text-sm text-gray-600">مدیریت فروش</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <span class="material-icons text-sm {% if staff.can_manage_warehouse %}text-emerald-500{% else %}text-gray-300{% endif %}">
+            {% if staff.can_manage_warehouse %}check_circle{% else %}cancel{% endif %}
+          </span>
+          <span class="text-sm text-gray-600">مدیریت انبار</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <span class="material-icons text-sm {% if staff.can_manage_accounting %}text-emerald-500{% else %}text-gray-300{% endif %}">
+            {% if staff.can_manage_accounting %}check_circle{% else %}cancel{% endif %}
+          </span>
+          <span class="text-sm text-gray-600">مدیریت حسابداری</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <span class="material-icons text-sm {% if staff.can_manage_support %}text-emerald-500{% else %}text-gray-300{% endif %}">
+            {% if staff.can_manage_support %}check_circle{% else %}cancel{% endif %}
+          </span>
+          <span class="text-sm text-gray-600">مدیریت پشتیبانی</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg col-span-2">
+          <span class="material-icons text-sm {% if staff.can_view_reports %}text-emerald-500{% else %}text-gray-300{% endif %}">
+            {% if staff.can_view_reports %}check_circle{% else %}cancel{% endif %}
+          </span>
+          <span class="text-sm text-gray-600">مشاهده گزارشات</span>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-3">دسترسی‌ها بر اساس دپارتمان به صورت خودکار تنظیم می‌شوند.</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

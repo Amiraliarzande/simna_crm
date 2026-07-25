@@ -1,10 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'contracts:contract-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">{{ title }}</h2>
+    <p class="text-xs text-gray-400 mt-0.5">اطلاعات قرارداد را وارد کنید</p>
+  </div>
+</div>
+
+<div class="max-w-3xl mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" enctype="multipart/form-data" class="space-y-5">
+    {% csrf_token %}
+    
+    <!-- کارمند -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">کارمند</label>
+      {{ form.employee }}
+      {% if form.employee.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.employee.errors|first }}</p>
+      {% endif %}
+    </div>
+    
+    <!-- عنوان -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">عنوان قرارداد</label>
+      {{ form.title }}
+      {% if form.title.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.title.errors|first }}</p>
+      {% endif %}
+    </div>
+    
+    <!-- شماره قرارداد -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">شماره قرارداد</label>
+      {{ form.contract_number }}
+      {% if form.contract_number.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.contract_number.errors|first }}</p>
+      {% endif %}
+    </div>
+    
+    <!-- توضیحات -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">توضیحات</label>
+      {{ form.description }}
+      {% if form.description.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.description.errors|first }}</p>
+      {% endif %}
+    </div>
+    
+    <!-- تاریخ شروع و پایان -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تاریخ شروع</label>
+        {{ form.start_date }}
+        {% if form.start_date.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.start_date.errors|first }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تاریخ پایان</label>
+        {{ form.end_date }}
+        {% if form.end_date.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.end_date.errors|first }}</p>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- فایل قرارداد -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">فایل قرارداد</label>
+      {{ form.contract_file }}
+      {% if form.contract_file.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.contract_file.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1">فایل PDF یا Word قرارداد را آپلود کنید (اختیاری)</p>
+    </div>
+    
+    <!-- یادداشت‌ها -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">یادداشت‌ها</label>
+      {{ form.notes }}
+      {% if form.notes.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.notes.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <div class="flex items-center gap-3 pt-2 border-t border-gray-200">
+      <button type="submit"
+        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+        {% if contract %}ذخیره تغییرات{% else %}ایجاد قرارداد{% endif %}
+      </button>
+      <a href="{% url 'contracts:contract-list' %}"
+        class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+        انصراف
+      </a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

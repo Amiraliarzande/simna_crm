@@ -1,66 +1,146 @@
 {% extends "base.html" %}
-{% block title %}{% if object %}ویرایش تسک{% else %}تسک جدید{% endif %}{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 {% block content %}
 
 <div class="flex items-center gap-4">
-  <a href="{% url 'task-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+  <a href="{% url 'staff:staff-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
     <span class="material-icons text-lg">arrow_forward</span>
   </a>
   <div>
-    <h2 class="text-lg font-bold text-gray-800">{% if object %}ویرایش تسک{% else %}تسک جدید{% endif %}</h2>
-    <p class="text-xs text-gray-400 mt-0.5">جزئیات تسک را وارد کنید</p>
+    <h2 class="text-lg font-bold text-gray-800">{{ title }}</h2>
+    <p class="text-xs text-gray-400 mt-0.5">اطلاعات کارمند را وارد کنید</p>
   </div>
 </div>
 
-<div class="max-w-lg mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-  <form method="post" class="space-y-5">
+<div class="max-w-3xl mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" enctype="multipart/form-data" class="space-y-5">
     {% csrf_token %}
 
-    {% if form %}
-      {% for field in form %}
+    {% if not staff %}
+    <!-- فرم ایجاد کارمند جدید -->
+    <div class="grid grid-cols-2 gap-4">
       <div>
-        <label class="text-xs font-medium text-gray-500 mb-1.5 block">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}
-        <p class="text-xs text-rose-500 mt-1">{{ field.errors|first }}</p>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">نام کاربری</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.username.errors|first }}</p>
         {% endif %}
       </div>
-      {% endfor %}
-    {% else %}
       <div>
-        <label class="text-xs font-medium text-gray-500 mb-1.5 block">عنوان تسک</label>
-        <input type="text" name="title" placeholder="مثلاً پیگیری تماس با مشتری"
-          class="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">ایمیل</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.email.errors|first }}</p>
+        {% endif %}
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="text-xs font-medium text-gray-500 mb-1.5 block">اولویت</label>
-          <select name="priority"
-            class="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
-            <option value="low">کم</option>
-            <option value="medium">متوسط</option>
-            <option value="high">بالا</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-xs font-medium text-gray-500 mb-1.5 block">سررسید</label>
-          <input type="datetime-local" name="due_date"
-            class="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
-        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">رمز عبور</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.password.errors|first }}</p>
+        {% endif %}
       </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تکرار رمز عبور</label>
+        {{ form.password_confirm }}
+        {% if form.password_confirm.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.password_confirm.errors|first }}</p>
+        {% endif %}
+      </div>
+    </div>
     {% endif %}
 
-    <div class="flex items-center gap-3 pt-2">
+    <!-- شماره تماس -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">شماره تماس</label>
+      {{ form.phone }}
+      {% if form.phone.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.phone.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- انتخاب دپارتمان -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">دپارتمان</label>
+      {{ form.department }}
+      {% if form.department.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.department.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1">با انتخاب دپارتمان، دسترسی‌های کاربر به صورت خودکار تنظیم می‌شود.</p>
+    </div>
+
+    <!-- دپارتمان دیگر (سایر) -->
+    <div id="otherDepartmentDiv" class="hidden">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">نام دپارتمان</label>
+      {{ form.department_other }}
+      {% if form.department_other.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.department_other.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- آدرس -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">آدرس</label>
+      {{ form.address }}
+    </div>
+
+    <!-- تصویر پروفایل -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">تصویر پروفایل</label>
+      {{ form.avatar }}
+      {% if staff and staff.avatar %}
+      <div class="mt-2">
+        <img src="{{ staff.avatar.url }}" class="w-16 h-16 rounded-full object-cover">
+      </div>
+      {% endif %}
+    </div>
+
+    {% if staff %}
+    <!-- وضعیت فعال/غیرفعال (فقط در ویرایش) -->
+    <div>
+      <label class="flex items-center gap-2 text-sm text-gray-600">
+        {{ form.is_active }}
+        فعال
+      </label>
+    </div>
+    {% endif %}
+
+    <!-- دکمه‌ها -->
+    <div class="flex items-center gap-3 pt-2 border-t border-gray-200">
       <button type="submit"
         class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
-        {% if object %}ذخیره تغییرات{% else %}ثبت تسک{% endif %}
+        {% if staff %}ذخیره تغییرات{% else %}ایجاد کارمند{% endif %}
       </button>
-      <a href="{% url 'task-list' %}"
+      <a href="{% url 'staff:staff-list' %}"
         class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
         انصراف
       </a>
     </div>
   </form>
 </div>
+
+<script>
+// نمایش/مخفی کردن فیلد دپارتمان دیگر (سایر)
+document.addEventListener('DOMContentLoaded', function() {
+  const departmentSelect = document.getElementById('id_department');
+  const otherDiv = document.getElementById('otherDepartmentDiv');
+
+  function toggleOtherDepartment() {
+    if (departmentSelect.value === 'other') {
+      otherDiv.classList.remove('hidden');
+    } else {
+      otherDiv.classList.add('hidden');
+    }
+  }
+
+  if (departmentSelect) {
+    departmentSelect.addEventListener('change', toggleOtherDepartment);
+    toggleOtherDepartment();
+  }
+});
+</script>
 
 {% endblock %}

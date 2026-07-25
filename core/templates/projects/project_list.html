@@ -1,10 +1,172 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}پروژه‌ها{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+      <span class="material-icons">folder</span>
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">پروژه‌ها</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ stats.total }} پروژه</p>
+    </div>
+  </div>
+  <a href="{% url 'projects:project-select-type' %}"
+    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+    <span class="material-icons text-lg">add</span>
+    پروژه جدید
+  </a>
+</div>
+
+<!-- آمار کارت‌ها -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+  <div class="bg-white rounded-xl p-3 shadow-sm text-center border border-gray-200">
+    <p class="text-xs text-gray-400">کل</p>
+    <p class="text-xl font-bold text-gray-800">{{ stats.total }}</p>
+  </div>
+  <div class="bg-white rounded-xl p-3 shadow-sm text-center border border-gray-200">
+    <p class="text-xs text-gray-400">شروع نشده</p>
+    <p class="text-xl font-bold text-gray-500">{{ stats.not_started }}</p>
+  </div>
+  <div class="bg-white rounded-xl p-3 shadow-sm text-center border border-blue-200">
+    <p class="text-xs text-gray-400">در حال پیشرفت</p>
+    <p class="text-xl font-bold text-blue-600">{{ stats.in_progress }}</p>
+  </div>
+  <div class="bg-white rounded-xl p-3 shadow-sm text-center border border-yellow-200">
+    <p class="text-xs text-gray-400">در انتظار</p>
+    <p class="text-xl font-bold text-yellow-600">{{ stats.pending }}</p>
+  </div>
+  <div class="bg-white rounded-xl p-3 shadow-sm text-center border border-emerald-200">
+    <p class="text-xs text-gray-400">تمام شده</p>
+    <p class="text-xl font-bold text-emerald-600">{{ stats.completed }}</p>
+  </div>
+</div>
+
+<!-- فیلترها -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <form method="GET" class="flex flex-wrap items-center gap-3">
+    <div class="min-w-[150px]">
+      <select name="status" onchange="this.form.submit()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+        <option value="">همه وضعیت‌ها</option>
+        {% for code, name in status_choices %}
+        <option value="{{ code }}" {% if current_status == code %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="min-w-[150px]">
+      <select name="type" onchange="this.form.submit()" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+        <option value="">همه انواع</option>
+        {% for code, name in type_choices %}
+        <option value="{{ code }}" {% if current_type == code %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+</div>
+
+<!-- جدول پروژه‌ها -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 text-gray-500 text-xs">
+          <th class="px-5 py-3 text-right font-medium">شماره</th>
+          <th class="px-5 py-3 text-right font-medium">عنوان</th>
+          <th class="px-5 py-3 text-right font-medium">مشتری</th>
+          <th class="px-5 py-3 text-right font-medium">نوع</th>
+          <th class="px-5 py-3 text-right font-medium">وضعیت</th>
+          <th class="px-5 py-3 text-right font-medium">تاریخ شروع</th>
+          <th class="px-5 py-3 text-right font-medium">عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+        <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition {% if project.is_overdue %}bg-rose-50/30{% endif %}">
+          <td class="px-5 py-3.5 font-medium text-gray-700">{{ project.project_number }}</td>
+          <td class="px-5 py-3.5">
+            <a href="{% url 'projects:project-detail' project.pk %}" class="text-gray-700 hover:text-indigo-600 transition">
+              {{ project.title }}
+            </a>
+          </td>
+          <td class="px-5 py-3.5 text-gray-500">{{ project.customer_name }}</td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+              {% if project.project_type == 'internal' %}bg-blue-50 text-blue-700
+              {% else %}bg-purple-50 text-purple-700{% endif %}">
+              {{ project.project_type_display }}
+            </span>
+          </td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium {{ project.status_color }}">
+              {{ project.status_display }}
+            </span>
+          </td>
+          <td class="px-5 py-3.5 text-gray-500">{{ project.start_date|date:"Y/m/d" }}</td>
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-1">
+              <a href="{% url 'projects:project-detail' project.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                 title="جزئیات">
+                <span class="material-icons text-lg">visibility</span>
+              </a>
+              {% if project.created_by == user %}
+              <a href="{% url 'projects:project-edit' project.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                 title="ویرایش">
+                <span class="material-icons text-lg">edit</span>
+              </a>
+              <a href="{% url 'projects:project-delete' project.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                 title="حذف">
+                <span class="material-icons text-lg">delete</span>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+              <div class="w-16 h-16 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mb-3">
+                <span class="material-icons text-3xl">folder</span>
+              </div>
+              <p class="text-sm text-gray-500 mb-4">هیچ پروژه‌ای ثبت نشده است.</p>
+              <a href="{% url 'projects:project-select-type' %}" class="text-sm text-indigo-600 font-medium hover:underline">ایجاد پروژه جدید</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- نمایش فیلترهای فعال -->
+{% if current_status or current_type %}
+<div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+  <span class="font-medium text-gray-700">فیلترهای فعال:</span>
+  {% if current_status %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    وضعیت: {% for code, name in status_choices %}{% if code == current_status %}{{ name }}{% endif %}{% endfor %}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+  {% if current_type %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    نوع: {% for code, name in type_choices %}{% if code == current_type %}{{ name }}{% endif %}{% endfor %}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- نمایش وضعیت دیر شده -->
+{% if projects %}
+<div class="text-xs text-gray-400 mt-2">
+  * پروژه‌های با پس‌زمینه قرمز، تاریخ پایان آنها گذشته است.
+</div>
+{% endif %}
+
+{% endblock %}

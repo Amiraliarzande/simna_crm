@@ -1,10 +1,87 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}شروع چت جدید{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'chat:chat-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">شروع چت جدید</h2>
+    <p class="text-xs text-gray-400 mt-0.5">نوع چت را انتخاب کنید</p>
+  </div>
+</div>
+
+<div class="max-w-lg mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+    
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">نوع چت</label>
+      {{ form.room_type }}
+    </div>
+
+    <div id="directChat" class="hidden">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">انتخاب کاربر</label>
+      <select name="target_user" class="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+        <option value="">انتخاب کنید...</option>
+        {% for u in users %}
+        <option value="{{ u.id }}">{{ u.get_full_name|default:u.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div id="departmentChat" class="hidden">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">انتخاب دپارتمان</label>
+      {{ form.department }}
+    </div>
+
+    <div id="groupChat" class="hidden">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">نام گروه</label>
+        {{ form.name }}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">انتخاب اعضا</label>
+        <select name="participants" multiple class="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition h-32">
+          {% for u in users %}
+          <option value="{{ u.id }}">{{ u.get_full_name|default:u.username }}</option>
+          {% endfor %}
+        </select>
+        <p class="text-xs text-gray-400 mt-1">برای انتخاب چند نفر، کلید Ctrl را نگه دارید.</p>
+      </div>
+    </div>
+
+    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+      شروع چت
+    </button>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const roomType = document.getElementById('id_room_type');
+  const directChat = document.getElementById('directChat');
+  const departmentChat = document.getElementById('departmentChat');
+  const groupChat = document.getElementById('groupChat');
+
+  function toggleForms() {
+    directChat.classList.add('hidden');
+    departmentChat.classList.add('hidden');
+    groupChat.classList.add('hidden');
+
+    if (roomType.value === 'direct') {
+      directChat.classList.remove('hidden');
+    } else if (roomType.value === 'department') {
+      departmentChat.classList.remove('hidden');
+    } else if (roomType.value === 'group') {
+      groupChat.classList.remove('hidden');
+    }
+  }
+
+  roomType.addEventListener('change', toggleForms);
+  toggleForms();
+});
+</script>
+
+{% endblock %}

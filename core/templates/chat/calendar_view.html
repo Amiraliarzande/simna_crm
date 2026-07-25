@@ -1,10 +1,255 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}تقویم{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+      <span class="material-icons">calendar_today</span>
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">تقویم</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ month_name }} {{ year }}</p>
+    </div>
+  </div>
+  <a href="{% url 'chat:calendar-event-create' %}"
+    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+    <span class="material-icons text-lg">add</span>
+    رویداد جدید
+  </a>
+</div>
+
+<!-- ناوبری ماه -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+  <div class="flex items-center justify-between">
+    <a href="{% url 'chat:calendar-view-month' prev_year prev_month %}"
+       class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+      <span class="material-icons">chevron_right</span>
+      ماه قبل
+    </a>
+    <span class="text-lg font-bold text-gray-800">{{ month_name }} {{ year }}</span>
+    <a href="{% url 'chat:calendar-view-month' next_year next_month %}"
+       class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+      ماه بعد
+      <span class="material-icons">chevron_left</span>
+    </a>
+  </div>
+</div>
+
+<!-- جدول تقویم -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50">
+          {% for day in weekdays %}
+          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500">{{ day }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in calendar %}
+        <tr>
+          {% for day in week %}
+          <td class="px-4 py-3 text-center border-t border-gray-100 align-top h-24">
+            {% if day != 0 %}
+              <div class="flex flex-col items-center">
+                <span class="text-sm font-medium {% if day == today_day and month == today_month and year == today_year %}bg-indigo-600 text-white w-7 h-7 rounded-full flex items-center justify-center{% else %}text-gray-700{% endif %}">
+                  {{ day }}
+                </span>
+                <!-- رویدادهای روز -->
+                <div class="mt-1 space-y-1 w-full">
+                  {% with events=events_by_day|get_item:day %}
+                    {% for event in events %}
+                      <div onclick="showEventDetails({{ event.id }}, '{{ event.title|escapejs }}', '{{ event.description|escapejs }}', '{{ event.time|time:'H:i' }}', '{{ event.color }}', '{{ event.priority }}', {% if event.is_important %}true{% else %}false{% endif %})"
+                           class="text-xs p-1 rounded cursor-pointer hover:opacity-75 transition
+                            {% if event.color == 'blue' %}bg-blue-100 text-blue-700
+                            {% elif event.color == 'green' %}bg-green-100 text-green-700
+                            {% elif event.color == 'red' %}bg-red-100 text-red-700
+                            {% elif event.color == 'yellow' %}bg-yellow-100 text-yellow-700
+                            {% elif event.color == 'purple' %}bg-purple-100 text-purple-700
+                            {% elif event.color == 'pink' %}bg-pink-100 text-pink-700
+                            {% elif event.color == 'orange' %}bg-orange-100 text-orange-700
+                            {% else %}bg-gray-100 text-gray-700{% endif %}
+                            {% if event.is_important %}font-bold border-2 border-red-400{% endif %}"
+                           title="{{ event.title }}{% if event.time %} - {{ event.time|time:'H:i' }}{% endif %}">
+                        <div class="flex items-center gap-1">
+                          <span class="text-xs">
+                            {% if event.priority == 'low' %}⬇️
+                            {% elif event.priority == 'medium' %}➡️
+                            {% elif event.priority == 'high' %}⬆️
+                            {% elif event.priority == 'urgent' %}🔴
+                            {% endif %}
+                          </span>
+                          <span class="truncate">{{ event.title|truncatechars:10 }}</span>
+                        </div>
+                      </div>
+                    {% empty %}
+                      <!-- اگر رویدادی نبود چیزی نمایش نده -->
+                    {% endfor %}
+                  {% endwith %}
+                </div>
+                <!-- دکمه افزودن رویداد -->
+                <button onclick="addEvent({{ year }}, {{ month }}, {{ day }})"
+                        class="mt-1 text-xs text-indigo-500 hover:text-indigo-700 hover:underline">
+                  +
+                </button>
+              </div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- مودال نمایش جزئیات رویداد -->
+<!-- ============================================ -->
+<div id="eventModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <span id="modalPriorityIcon" class="text-xl"></span>
+        <h3 class="text-lg font-bold text-gray-800" id="modalTitle">عنوان رویداد</h3>
+      </div>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="space-y-3">
+      <div>
+        <p class="text-xs text-gray-400">توضیحات</p>
+        <p class="text-sm text-gray-700" id="modalDescription">توضیحات رویداد</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400">ساعت</p>
+        <p class="text-sm text-gray-700" id="modalTime">--:--</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400">اولویت</p>
+        <p class="text-sm font-medium" id="modalPriority">متوسط</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400">رنگ</p>
+        <div class="flex items-center gap-2 mt-1">
+          <div id="modalColor" class="w-6 h-6 rounded-full border border-gray-200"></div>
+          <span class="text-sm text-gray-700" id="modalColorName">آبی</span>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400">وضعیت</p>
+        <span id="modalImportant" class="text-sm text-gray-700">عادی</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-200">
+      <a href="#" id="modalEditBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition text-center">
+        ویرایش
+      </a>
+      <a href="#" id="modalDeleteBtn" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition text-center">
+        حذف
+      </a>
+      <button onclick="closeModal()" class="flex-1 text-gray-500 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition border border-gray-200">
+        بستن
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function addEvent(year, month, day) {
+  const dateStr = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  window.location.href = "{% url 'chat:calendar-event-create' %}?date=" + dateStr;
+}
+
+// ============================================
+// نمایش جزئیات رویداد در مودال
+// ============================================
+function showEventDetails(id, title, description, time, color, priority, isImportant) {
+  const modal = document.getElementById('eventModal');
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalDescription').textContent = description || 'توضیحی ثبت نشده است.';
+  document.getElementById('modalTime').textContent = time || '--:--';
+
+  // تنظیم اولویت
+  const priorityNames = {
+    'low': 'کم',
+    'medium': 'متوسط',
+    'high': 'فوری',
+    'urgent': 'ضروری'
+  };
+  const priorityIcons = {
+    'low': '⬇️',
+    'medium': '➡️',
+    'high': '⬆️',
+    'urgent': '🔴'
+  };
+  const priorityColors = {
+    'low': 'text-gray-500',
+    'medium': 'text-blue-600',
+    'high': 'text-orange-600',
+    'urgent': 'text-rose-600'
+  };
+  document.getElementById('modalPriorityIcon').textContent = priorityIcons[priority] || '➡️';
+  document.getElementById('modalPriority').textContent = priorityNames[priority] || 'متوسط';
+  document.getElementById('modalPriority').className = 'text-sm font-medium ' + (priorityColors[priority] || 'text-blue-600');
+
+  // تنظیم رنگ
+  const colorDiv = document.getElementById('modalColor');
+  const colorNames = {
+    'blue': 'آبی',
+    'green': 'سبز',
+    'red': 'قرمز',
+    'yellow': 'زرد',
+    'purple': 'بنفش',
+    'pink': 'صورتی',
+    'orange': 'نارنجی'
+  };
+  const colorClasses = {
+    'blue': 'bg-blue-500',
+    'green': 'bg-green-500',
+    'red': 'bg-red-500',
+    'yellow': 'bg-yellow-500',
+    'purple': 'bg-purple-500',
+    'pink': 'bg-pink-500',
+    'orange': 'bg-orange-500'
+  };
+  colorDiv.className = 'w-6 h-6 rounded-full border border-gray-200 ' + (colorClasses[color] || 'bg-gray-500');
+  document.getElementById('modalColorName').textContent = colorNames[color] || color;
+
+  // وضعیت مهم
+  document.getElementById('modalImportant').textContent = isImportant ? '🌟 مهم' : 'عادی';
+  document.getElementById('modalImportant').className = 'text-sm ' + (isImportant ? 'text-red-600 font-bold' : 'text-gray-700');
+
+  // دکمه‌های ویرایش و حذف
+  document.getElementById('modalEditBtn').href = "{% url 'chat:calendar-event-edit' 0 %}".replace('0', id);
+  document.getElementById('modalDeleteBtn').href = "{% url 'chat:calendar-event-delete' 0 %}".replace('0', id);
+
+  modal.classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('eventModal').classList.add('hidden');
+}
+
+// بستن مودال با کلیک روی پس‌زمینه
+document.getElementById('eventModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeModal();
+  }
+});
+
+// بستن مودال با کلید ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeModal();
+  }
+});
+</script>
+
+{% endblock %}

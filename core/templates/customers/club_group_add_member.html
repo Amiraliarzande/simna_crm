@@ -1,10 +1,160 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}افزودن عضو به {{ group.name }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'customers:club-group-detail' group.pk %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">افزودن عضو به {{ group.name }}</h2>
+    <p class="text-xs text-gray-400 mt-0.5">{{ total_available }} مشتری در دسترس</p>
+  </div>
+</div>
+
+<!-- آمار کارت‌ها -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+    <p class="text-xs text-gray-400 mb-1">کل مشتریان در دسترس</p>
+    <p class="text-2xl font-bold text-gray-800">{{ total_available }}</p>
+  </div>
+  <a href="?customer_type=regular{% if search_query %}&search={{ search_query }}{% endif %}"
+     class="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer {% if current_filter == 'regular' %}ring-2 ring-indigo-200{% endif %}">
+    <p class="text-xs text-gray-400 mb-1">مشتریان عادی</p>
+    <p class="text-2xl font-bold text-indigo-600">{{ regular_count }}</p>
+  </a>
+  <a href="?customer_type=potential{% if search_query %}&search={{ search_query }}{% endif %}"
+     class="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer {% if current_filter == 'potential' %}ring-2 ring-amber-200{% endif %}">
+    <p class="text-xs text-gray-400 mb-1">مشتریان بالقوه</p>
+    <p class="text-2xl font-bold text-amber-600">{{ potential_count }}</p>
+  </a>
+</div>
+
+<!-- نوار جستجو و فیلتر -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <form method="GET" class="flex flex-wrap items-center gap-3">
+    <div class="flex-1 min-w-[200px]">
+      <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition">
+        <span class="material-icons text-gray-400 text-lg">search</span>
+        <input type="text" name="search" placeholder="جستجو بر اساس نام، شرکت یا شماره تماس..."
+               value="{{ search_query|default:'' }}"
+               class="bg-transparent outline-none text-sm w-full">
+        <button type="submit" class="text-indigo-600 text-sm font-medium">جستجو</button>
+      </div>
+    </div>
+
+    <!-- فیلتر مخفی برای حفظ نوع مشتری -->
+    {% if current_filter %}
+    <input type="hidden" name="customer_type" value="{{ current_filter }}">
+    {% endif %}
+
+    <a href="{% url 'customers:club-group-add-member' group.pk %}"
+       class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+      <span class="material-icons text-lg">refresh</span>
+      بازنشانی
+    </a>
+  </form>
+</div>
+
+<!-- فرم انتخاب مشتریان -->
+<div class="max-w-4xl mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <label class="text-sm font-medium text-gray-700">انتخاب مشتریان</label>
+        <button type="button" onclick="toggleAll()" class="text-xs text-indigo-600 hover:underline">
+          انتخاب همه
+        </button>
+      </div>
+
+      {% if available_customers %}
+      <div class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+        {% for customer in available_customers %}
+        <label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition {% if not customer.is_active %}opacity-60{% endif %}">
+          <input type="checkbox" name="customers" value="{{ customer.id }}"
+                 class="customer-checkbox w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-medium text-gray-700">{{ customer.full_name }}</p>
+              {% if customer.is_potential %}
+              <span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">بالقوه</span>
+              {% endif %}
+              {% if not customer.is_active %}
+              <span class="text-xs px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full">غیرفعال</span>
+              {% endif %}
+            </div>
+            <p class="text-xs text-gray-400">
+              {{ customer.company|default:"بدون شرکت" }} | {{ customer.phone }}
+              {% if customer.department %}
+              | دپارتمان: {{ customer.department }}
+              {% endif %}
+            </p>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
+        <span>{{ available_customers|length }} مشتری انتخاب شده</span>
+        <span id="selectedCount">۰ انتخاب شده</span>
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-gray-400">
+        <span class="material-icons text-4xl block mx-auto mb-2">check_circle</span>
+        <p>همه مشتریان در این گروه عضو هستند.</p>
+        <a href="{% url 'customers:customer-list' %}" class="text-indigo-600 text-sm font-medium hover:underline">مشاهده همه مشتریان</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="flex items-center gap-3 pt-2 border-t border-gray-200">
+      <button type="submit"
+              class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition"
+              {% if not available_customers %}disabled{% endif %}>
+        <span class="flex items-center justify-center gap-2">
+          <span class="material-icons text-lg">person_add</span>
+          افزودن به گروه
+        </span>
+      </button>
+      <a href="{% url 'customers:club-group-detail' group.pk %}"
+        class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+        انصراف
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+// شمارش تعداد انتخاب‌ها
+document.addEventListener('DOMContentLoaded', function() {
+  const checkboxes = document.querySelectorAll('.customer-checkbox');
+  const selectedCount = document.getElementById('selectedCount');
+
+  function updateCount() {
+    const checked = document.querySelectorAll('.customer-checkbox:checked').length;
+    selectedCount.textContent = checked + ' انتخاب شده';
+  }
+
+  checkboxes.forEach(function(cb) {
+    cb.addEventListener('change', updateCount);
+  });
+
+  updateCount();
+});
+
+// انتخاب همه / لغو همه
+function toggleAll() {
+  const checkboxes = document.querySelectorAll('.customer-checkbox');
+  const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+  checkboxes.forEach(function(cb) {
+    cb.checked = !allChecked;
+  });
+  // به‌روزرسانی تعداد
+  const event = new Event('change');
+  document.querySelectorAll('.customer-checkbox').forEach(cb => cb.dispatchEvent(event));
+}
+</script>
+
+{% endblock %}

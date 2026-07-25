@@ -2,15 +2,112 @@
 {% block title %}مشتریان{% endblock %}
 {% block content %}
 
-<div class="flex items-center justify-between">
-  <div class="flex items-center gap-4">
-    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+<!-- آمار کارت‌ها -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+  <a href="?status=all{% if current_owner %}&owner={{ current_owner }}{% endif %}{% if current_customer_type %}&customer_type={{ current_customer_type }}{% endif %}"
+     class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer {% if not current_status or current_status == 'all' %}ring-2 ring-indigo-200{% endif %}">
+    <div>
+      <p class="text-xs text-gray-400 mb-1">کل مشتریان</p>
+      <p class="text-2xl font-bold text-gray-800">{{ stats.total }}</p>
+    </div>
+    <div class="bg-indigo-50 text-indigo-500 rounded-full w-11 h-11 flex items-center justify-center">
       <span class="material-icons">groups</span>
     </div>
+  </a>
+  <a href="?status=active{% if current_owner %}&owner={{ current_owner }}{% endif %}{% if current_customer_type %}&customer_type={{ current_customer_type }}{% endif %}"
+     class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer {% if current_status == 'active' %}ring-2 ring-emerald-200{% endif %}">
     <div>
-      <h2 class="text-lg font-bold text-gray-800">لیست مشتریان</h2>
-      <p class="text-xs text-gray-400 mt-0.5">{{ customers|length }} مشتری ثبت شده</p>
+      <p class="text-xs text-gray-400 mb-1">مشتریان فعال</p>
+      <p class="text-2xl font-bold text-emerald-600">{{ stats.active }}</p>
     </div>
+    <div class="bg-emerald-50 text-emerald-500 rounded-full w-11 h-11 flex items-center justify-center">
+      <span class="material-icons">check_circle</span>
+    </div>
+  </a>
+  <a href="?status=inactive{% if current_owner %}&owner={{ current_owner }}{% endif %}{% if current_customer_type %}&customer_type={{ current_customer_type }}{% endif %}"
+     class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer {% if current_status == 'inactive' %}ring-2 ring-rose-200{% endif %}">
+    <div>
+      <p class="text-xs text-gray-400 mb-1">مشتریان غیرفعال</p>
+      <p class="text-2xl font-bold text-rose-600">{{ stats.inactive }}</p>
+    </div>
+    <div class="bg-rose-50 text-rose-500 rounded-full w-11 h-11 flex items-center justify-center">
+      <span class="material-icons">cancel</span>
+    </div>
+  </a>
+  <a href="?status=potential{% if current_owner %}&owner={{ current_owner }}{% endif %}{% if current_customer_type %}&customer_type={{ current_customer_type }}{% endif %}"
+     class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer {% if current_status == 'potential' %}ring-2 ring-amber-200{% endif %}">
+    <div>
+      <p class="text-xs text-gray-400 mb-1">مشتریان بالقوه</p>
+      <p class="text-2xl font-bold text-amber-600">{{ stats.potential }}</p>
+    </div>
+    <div class="bg-amber-50 text-amber-500 rounded-full w-11 h-11 flex items-center justify-center">
+      <span class="material-icons">person_add</span>
+    </div>
+  </a>
+  <a href="?status=archived{% if current_owner %}&owner={{ current_owner }}{% endif %}{% if current_customer_type %}&customer_type={{ current_customer_type }}{% endif %}"
+     class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer {% if current_status == 'archived' %}ring-2 ring-gray-200{% endif %}">
+    <div>
+      <p class="text-xs text-gray-400 mb-1">بایگانی شده</p>
+      <p class="text-2xl font-bold text-gray-600">{{ stats.archived|default:0 }}</p>
+    </div>
+    <div class="bg-gray-50 text-gray-500 rounded-full w-11 h-11 flex items-center justify-center">
+      <span class="material-icons">archive</span>
+    </div>
+  </a>
+</div>
+
+<!-- نوار جستجو و فیلتر -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <form method="GET" class="flex flex-wrap items-center gap-3">
+    <!-- جستجو -->
+    <div class="flex-1 min-w-[200px]">
+      <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition">
+        <span class="material-icons text-gray-400 text-lg">search</span>
+        <input type="text" name="search" placeholder="جستجو بر اساس نام، شرکت یا شماره تماس..."
+               value="{{ search_query|default:'' }}"
+               class="bg-transparent outline-none text-sm w-full">
+        <button type="submit" class="text-indigo-600 text-sm font-medium">جستجو</button>
+      </div>
+    </div>
+
+    <!-- فیلتر کارشناس -->
+    <div class="min-w-[150px]">
+      <select name="owner" onchange="this.form.submit()"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+        <option value="">همه کارشناسان</option>
+        {% for owner in owners %}
+        <option value="{{ owner.id }}" {% if current_owner == owner.id|stringformat:'s' %}selected{% endif %}>
+          {{ owner.username }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- فیلتر نوع مشتری -->
+    <div class="min-w-[150px]">
+      <select name="customer_type" onchange="this.form.submit()"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+        <option value="">همه انواع</option>
+        <option value="regular" {% if current_customer_type == 'regular' %}selected{% endif %}>عادی</option>
+        <option value="gold" {% if current_customer_type == 'gold' %}selected{% endif %}>طلایی</option>
+        <option value="platinum" {% if current_customer_type == 'platinum' %}selected{% endif %}>پلاتینیوم</option>
+        <option value="vip" {% if current_customer_type == 'vip' %}selected{% endif %}>VIP</option>
+      </select>
+    </div>
+
+    <a href="{% url 'customers:check-deactivate' %}"
+       class="bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+      <span class="material-icons text-lg">autorenew</span>
+      بررسی غیرفعال‌ها
+    </a>
+  </form>
+</div>
+
+<!-- دکمه مشتری جدید -->
+<div class="flex items-center justify-between">
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">لیست مشتریان</h2>
+    <p class="text-xs text-gray-400">{{ customers|length }} مشتری</p>
   </div>
   <a href="{% url 'customers:customer-create' %}"
     class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
@@ -19,66 +116,151 @@
   </a>
 </div>
 
+<!-- جدول مشتریان -->
 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-  <table class="w-full text-sm">
-    <thead>
-      <tr class="bg-gray-50 text-gray-500 text-xs">
-        <th class="px-5 py-3 text-right font-medium">نام</th>
-        <th class="px-5 py-3 text-right font-medium">شرکت</th>
-        <th class="px-5 py-3 text-right font-medium">ایمیل</th>
-        <th class="px-5 py-3 text-right font-medium">نوع مشتری</th>
-        <th class="px-5 py-3 text-right font-medium">وضعیت</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for customer in customers %}
-      <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition">
-        <td class="px-5 py-3.5">
-          <a href="{% url 'customers:customer-detail' customer.pk %}" class="flex items-center gap-3 group">
-            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">
-              {{ customer.full_name|slice:":1"|upper }}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 text-gray-500 text-xs">
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">نام</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">شرکت</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">تلفن</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">منبع</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">کارشناس</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">نوع</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">وضعیت</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+        <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition {% if customer.is_archived %}opacity-75 bg-gray-50/50{% endif %}">
+          <td class="px-5 py-3.5">
+            <a href="{% url 'customers:customer-detail' customer.pk %}" class="flex items-center gap-3 group">
+              <div class="w-8 h-8 rounded-lg {% if customer.is_archived %}bg-gray-200 text-gray-500{% else %}bg-indigo-50 text-indigo-600{% endif %} text-xs font-bold flex items-center justify-center shrink-0">
+                {{ customer.full_name|slice:":1"|upper }}
+              </div>
+              <span class="font-medium {% if customer.is_archived %}text-gray-400{% else %}text-gray-700 group-hover:text-indigo-600{% endif %} transition">{{ customer.full_name }}</span>
+            </a>
+          </td>
+          <td class="px-5 py-3.5 text-gray-500">{{ customer.company|default:"-" }}</td>
+          <td class="px-5 py-3.5 text-gray-500">{{ customer.phone|default:"-" }}</td>
+          <td class="px-5 py-3.5 text-gray-500">{{ customer.source_display|default:"-" }}</td>
+          <td class="px-5 py-3.5 text-gray-500">{{ customer.owner|default:"-" }}</td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+              {% if customer.customer_type == 'vip' %}bg-amber-50 text-amber-700
+              {% elif customer.customer_type == 'platinum' %}bg-purple-50 text-purple-700
+              {% elif customer.customer_type == 'gold' %}bg-yellow-50 text-yellow-700
+              {% else %}bg-gray-50 text-gray-600{% endif %}">
+              {{ customer.get_customer_type_display }}
+            </span>
+            {% if customer.is_potential %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+              بالقوه
+            </span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3.5">
+            {% if customer.is_archived %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              <span class="material-icons text-sm">archive</span>
+              بایگانی
+            </span>
+            {% elif customer.is_active %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              فعال
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              غیرفعال
+            </span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-1">
+              {% if customer.is_archived %}
+              <a href="{% url 'customers:customer-unarchive' customer.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50 transition"
+                title="بازگرداندن">
+                <span class="material-icons text-lg">restore</span>
+              </a>
+              <a href="{% url 'customers:customer-archive-delete' customer.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-rose-600 hover:bg-rose-50 transition"
+                title="حذف دائمی">
+                <span class="material-icons text-lg">delete_forever</span>
+              </a>
+              {% else %}
+              <a href="{% url 'customers:customer-edit' customer.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                title="ویرایش">
+                <span class="material-icons text-lg">edit</span>
+              </a>
+              <a href="{% url 'customers:customer-archive' customer.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                title="بایگانی">
+                <span class="material-icons text-lg">archive</span>
+              </a>
+              <a href="{% url 'customers:customer-toggle-status' customer.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                title="{% if customer.is_active %}غیرفعال کردن{% else %}فعال کردن{% endif %}">
+                <span class="material-icons text-lg">
+                  {% if customer.is_active %}toggle_on{% else %}toggle_off{% endif %}
+                </span>
+              </a>
+              {% endif %}
             </div>
-            <span class="font-medium text-gray-700 group-hover:text-indigo-600 transition">{{ customer.full_name }}</span>
-          </a>
-        </td>
-        <td class="px-5 py-3.5 text-gray-500">{{ customer.company|default:"-" }}</td>
-        <td class="px-5 py-3.5 text-gray-500">{{ customer.email|default:"-" }}</td>
-        <td class="px-5 py-3.5">
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium 
-            {% if customer.customer_type == 'vip' %}bg-amber-50 text-amber-700
-            {% elif customer.customer_type == 'platinum' %}bg-purple-50 text-purple-700
-            {% elif customer.customer_type == 'gold' %}bg-yellow-50 text-yellow-700
-            {% else %}bg-gray-50 text-gray-600{% endif %}">
-            {{ customer.get_customer_type_display }}
-          </span>
-        </td>
-        <td class="px-5 py-3.5">
-          {% if customer.is_active %}
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>فعال
-          </span>
-          {% else %}
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700">
-            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>غیرفعال
-          </span>
-          {% endif %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="5">
-          <div class="flex flex-col items-center justify-center py-16 text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mb-3">
-              <span class="material-icons text-3xl">groups</span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8">
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+              <div class="w-16 h-16 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mb-3">
+                <span class="material-icons text-3xl">groups</span>
+              </div>
+              <p class="text-sm text-gray-500 mb-4">مشتریای ثبت نشده است.</p>
+              <a href="{% url 'customers:customer-create' %}" class="text-sm text-indigo-600 font-medium hover:underline">افزودن مشتری جدید</a>
             </div>
-            <p class="text-sm text-gray-500 mb-4">مشتریای ثبت نشده است.</p>
-            <a href="{% url 'customers:customer-create' %}" class="text-sm text-indigo-600 font-medium hover:underline">افزودن مشتری جدید</a>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+
+<!-- نمایش فیلترهای فعال -->
+{% if current_status or current_owner or current_customer_type or search_query %}
+<div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+  <span class="font-medium text-gray-700">فیلترهای فعال:</span>
+  {% if current_status %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    وضعیت: {% if current_status == 'active' %}فعال{% elif current_status == 'inactive' %}غیرفعال{% elif current_status == 'potential' %}بالقوه{% elif current_status == 'archived' %}بایگانی{% else %}همه{% endif %}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+  {% if current_customer_type %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    نوع: {% if current_customer_type == 'regular' %}عادی{% elif current_customer_type == 'gold' %}طلایی{% elif current_customer_type == 'platinum' %}پلاتینیوم{% elif current_customer_type == 'vip' %}VIP{% endif %}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'customer_type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+  {% if current_owner %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    کارشناس: {{ current_owner }}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'owner' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+  {% if search_query %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    جستجو: {{ search_query }}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'search' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+</div>
+{% endif %}
 
 {% endblock %}

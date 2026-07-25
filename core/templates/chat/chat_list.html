@@ -1,10 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}چت آنلاین{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+      <span class="material-icons">chat</span>
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">چت آنلاین</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ room_list|length }} چت فعال</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'chat:chat-saved-messages' %}"
+      class="bg-amber-50 hover:bg-amber-100 text-amber-700 px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">star</span>
+      پیام‌های ذخیره شده
+    </a>
+    <a href="{% url 'chat:chat-start' %}"
+      class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">add</span>
+      چت جدید
+    </a>
+  </div>
+</div>
+
+<!-- لیست چت‌ها -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  {% if has_pinned %}
+  <div class="bg-amber-50 px-4 py-2 border-b border-amber-100">
+    <p class="text-xs text-amber-700 flex items-center gap-1">
+      <span class="material-icons text-sm">push_pin</span>
+      چت‌های پین شده
+    </p>
+  </div>
+  {% endif %}
+
+  {% for item in room_list %}
+  <a href="{% url 'chat:chat-room' item.id %}" class="block border-b border-gray-100 last:border-0 hover:bg-gray-50 transition {% if item.is_pinned %}bg-amber-50/30{% endif %}">
+    <div class="flex items-center justify-between p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full {% if item.is_pinned %}bg-amber-100 text-amber-600{% else %}bg-indigo-50 text-indigo-600{% endif %} flex items-center justify-center">
+          <span class="material-icons">{% if item.is_pinned %}push_pin{% else %}forum{% endif %}</span>
+        </div>
+        <div>
+          <p class="font-medium text-gray-800 flex items-center gap-2">
+            {% if item.room.room_type == 'direct' %}
+              {% for p in item.room.participants.all %}
+                {% if p != user %}
+                  {{ p.get_full_name|default:p.username }}
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              {{ item.room.name|default:item.room.get_room_type_display }}
+            {% endif %}
+            {% if item.is_pinned %}
+            <span class="text-xs text-amber-600">📌 پین شده</span>
+            {% endif %}
+          </p>
+          <p class="text-xs text-gray-400">
+            {% if item.last_msg %}
+              {{ item.last_msg.sender.get_full_name|default:item.last_msg.sender.username }}: {{ item.last_msg.message|truncatechars:30 }}
+            {% else %}
+              بدون پیام
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-gray-400">{{ item.room.updated_at|date:"H:i" }}</span>
+        {% if item.unread_count > 0 %}
+        <span class="bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ item.unread_count }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% empty %}
+  <div class="flex flex-col items-center justify-center py-16 text-center">
+    <div class="w-16 h-16 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mb-3">
+      <span class="material-icons text-3xl">chat</span>
+    </div>
+    <p class="text-sm text-gray-500 mb-4">هیچ چتی وجود ندارد.</p>
+    <a href="{% url 'chat:chat-start' %}" class="text-sm text-indigo-600 font-medium hover:underline">شروع چت جدید</a>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

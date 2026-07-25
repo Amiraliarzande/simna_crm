@@ -12,19 +12,107 @@
   </div>
 </div>
 
-<div class="max-w-lg mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+<div class="max-w-2xl mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
   <form method="post" class="space-y-5">
     {% csrf_token %}
-    
-    {% for field in form %}
-    <div>
-      <label class="text-xs font-medium text-gray-500 mb-1.5 block">{{ field.label }}</label>
-      {{ field }}
-      {% if field.errors %}
-      <p class="text-xs text-rose-500 mt-1">{{ field.errors|first }}</p>
-      {% endif %}
+
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">نام</label>
+        {{ form.first_name }}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">نام خانوادگی</label>
+        {{ form.last_name }}
+      </div>
     </div>
-    {% endfor %}
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">شرکت</label>
+        {{ form.company }}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تلفن</label>
+        {{ form.phone }}
+        {% if form.phone.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.phone.errors|first }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">ایمیل</label>
+      {{ form.email }}
+    </div>
+
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">آدرس</label>
+      {{ form.address }}
+    </div>
+
+
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">منبع آشنایی</label>
+      <div class="flex items-center gap-2">
+        {{ form.source }}
+        <button type="button" onclick="showOtherSource()"
+                class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition flex items-center justify-center">
+          <span class="material-icons text-lg">add</span>
+        </button>
+      </div>
+      <div id="otherSourceDiv" class="mt-2 hidden">
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">سایر منابع</label>
+        {{ form.source_other }}
+      </div>
+    </div>
+
+
+    <div id="potentialStatusDiv" class="{% if not customer.is_potential %}hidden{% endif %}">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">وضعیت بالقوه</label>
+      <div class="flex items-center gap-2">
+        {{ form.potential_status }}
+        <button type="button" onclick="showOtherPotentialStatus()"
+                class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition flex items-center justify-center">
+          <span class="material-icons text-lg">add</span>
+        </button>
+      </div>
+      <div id="otherPotentialStatusDiv" class="mt-2 hidden">
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">سایر وضعیت‌ها</label>
+        {{ form.potential_status_other }}
+      </div>
+    </div>
+
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">نوع مشتری</label>
+        {{ form.customer_type }}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">کارشناس مسئول</label>
+        {{ form.owner }}
+      </div>
+    </div>
+
+    <!-- چک‌باکس‌ها -->
+    <div class="flex items-center gap-6">
+      <label class="flex items-center gap-2 text-sm text-gray-600">
+        {{ form.is_active }}
+        فعال
+      </label>
+      <label class="flex items-center gap-2 text-sm text-gray-600">
+        <input type="checkbox" id="id_is_potential_check" name="is_potential" {% if customer.is_potential %}checked{% endif %}>
+        مشتری بالقوه
+      </label>
+      <input type="hidden" name="is_potential_hidden" id="id_is_potential_hidden" value="{% if customer.is_potential %}on{% endif %}">
+    </div>
+
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">سقف اعتبار</label>
+      {{ form.credit_limit }}
+    </div>
 
     <div class="flex items-center gap-3 pt-2">
       <button type="submit"
@@ -38,5 +126,55 @@
     </div>
   </form>
 </div>
+
+<script>
+function showOtherSource() {
+  const sourceSelect = document.getElementById('id_source');
+  const otherDiv = document.getElementById('otherSourceDiv');
+  if (sourceSelect.value === 'other') {
+    otherDiv.classList.remove('hidden');
+  } else {
+    otherDiv.classList.add('hidden');
+  }
+}
+
+function showOtherPotentialStatus() {
+  const statusSelect = document.getElementById('id_potential_status');
+  const otherDiv = document.getElementById('otherPotentialStatusDiv');
+  if (statusSelect.value === 'other') {
+    otherDiv.classList.remove('hidden');
+  } else {
+    otherDiv.classList.add('hidden');
+  }
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const potentialCheck = document.getElementById('id_is_potential_check');
+  const potentialDiv = document.getElementById('potentialStatusDiv');
+  const hiddenInput = document.getElementById('id_is_potential_hidden');
+
+  function togglePotentialStatus() {
+    if (potentialCheck.checked) {
+      potentialDiv.classList.remove('hidden');
+      hiddenInput.value = 'on';
+    } else {
+      potentialDiv.classList.add('hidden');
+      hiddenInput.value = '';
+    }
+  }
+
+  potentialCheck.addEventListener('change', togglePotentialStatus);
+  togglePotentialStatus();
+
+
+  showOtherSource();
+  document.getElementById('id_source').addEventListener('change', showOtherSource);
+
+
+  showOtherPotentialStatus();
+  document.getElementById('id_potential_status').addEventListener('change', showOtherPotentialStatus);
+});
+</script>
 
 {% endblock %}

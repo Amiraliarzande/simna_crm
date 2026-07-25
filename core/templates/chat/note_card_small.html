@@ -1,10 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+<div class="flex flex-col">
+  <div class="flex items-start justify-between">
+    <h4 class="font-medium text-gray-800 text-sm truncate">{{ note.title }}</h4>
+    <div class="flex items-center gap-0.5 shrink-0">
+      <a href="{% url 'chat:note-toggle-pin' note.pk %}"
+         class="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition"
+         title="{% if note.is_pinned %}آنپین{% else %}پین{% endif %}">
+        <span class="material-icons text-sm">{% if note.is_pinned %}push_pin{% else %}push_pin_outline{% endif %}</span>
+      </a>
+      <a href="{% url 'chat:note-edit' note.pk %}"
+         class="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+         title="ویرایش">
+        <span class="material-icons text-sm">edit</span>
+      </a>
+      <a href="{% url 'chat:note-archive' note.pk %}"
+         class="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition"
+         title="بایگانی">
+        <span class="material-icons text-sm">archive</span>
+      </a>
+      <a href="{% url 'chat:note-delete' note.pk %}"
+         class="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+         title="حذف">
+        <span class="material-icons text-sm">delete</span>
+      </a>
+    </div>
+  </div>
+  <p class="text-xs text-gray-600 line-clamp-2 mt-1 whitespace-pre-wrap">{{ note.content }}</p>
+  <div class="flex items-center justify-between mt-2">
+    <span class="text-xs text-gray-400">{{ note.updated_at|date:"Y/m/d H:i" }}</span>
+    {% if note.is_pinned %}
+    <span class="text-xs text-amber-600">📌</span>
+    {% endif %}
+  </div>
+</div>

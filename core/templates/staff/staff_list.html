@@ -1,10 +1,212 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}کارکنان{% endblock %}
+{% block content %}
+
+<!-- آمار کارت‌ها -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <a href="?status=all" class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer">
+    <div>
+      <p class="text-xs text-gray-400 mb-1">کل کارکنان</p>
+      <p class="text-2xl font-bold text-gray-800">{{ stats.total }}</p>
+    </div>
+    <div class="bg-indigo-50 text-indigo-500 rounded-full w-11 h-11 flex items-center justify-center">
+      <span class="material-icons">people</span>
+    </div>
+  </a>
+  <a href="?status=active" class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer">
+    <div>
+      <p class="text-xs text-gray-400 mb-1">کارکنان فعال</p>
+      <p class="text-2xl font-bold text-emerald-600">{{ stats.active }}</p>
+    </div>
+    <div class="bg-emerald-50 text-emerald-500 rounded-full w-11 h-11 flex items-center justify-center">
+      <span class="material-icons">check_circle</span>
+    </div>
+  </a>
+  <a href="?status=inactive" class="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer">
+    <div>
+      <p class="text-xs text-gray-400 mb-1">کارکنان غیرفعال</p>
+      <p class="text-2xl font-bold text-rose-600">{{ stats.inactive }}</p>
+    </div>
+    <div class="bg-rose-50 text-rose-500 rounded-full w-11 h-11 flex items-center justify-center">
+      <span class="material-icons">cancel</span>
+    </div>
+  </a>
+</div>
+
+<!-- نوار جستجو و فیلتر -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  <form method="GET" class="flex flex-wrap items-center gap-3">
+    <div class="flex-1 min-w-[200px]">
+      <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition">
+        <span class="material-icons text-gray-400 text-lg">search</span>
+        <input type="text" name="search" placeholder="جستجو بر اساس نام، شماره، ایمیل..." 
+               value="{{ search_query|default:'' }}"
+               class="bg-transparent outline-none text-sm w-full">
+        <button type="submit" class="text-indigo-600 text-sm font-medium">جستجو</button>
+      </div>
+    </div>
+    
+    <div class="min-w-[150px]">
+      <select name="department" onchange="this.form.submit()"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+        <option value="">همه دپارتمان‌ها</option>
+        {% for dept_code, dept_name in department_choices %}
+        <option value="{{ dept_code }}" {% if current_department == dept_code %}selected{% endif %}>
+          {{ dept_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if is_manager %}
+    <a href="{% url 'staff:staff-create' %}"
+      class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">add</span>
+      کارمند جدید
+    </a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- جدول کارکنان -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 text-gray-500 text-xs">
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">کارمند</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">سمت</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">دپارتمان</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">شماره</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">ایمیل</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">وضعیت</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for staff_member in staff %}
+        <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition">
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-3">
+              {% if staff_member.avatar %}
+              <img src="{{ staff_member.avatar.url }}" class="w-8 h-8 rounded-full object-cover">
+              {% else %}
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">
+                {{ staff_member.full_name|slice:":1"|upper }}
+              </div>
+              {% endif %}
+              <span class="font-medium text-gray-700">{{ staff_member.full_name }}</span>
+            </div>
+          </td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+              {{ staff_member.position_display }}
+            </span>
+          </td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+              {% if staff_member.department == 'management' %}bg-purple-50 text-purple-700
+              {% elif staff_member.department == 'sales' %}bg-blue-50 text-blue-700
+              {% elif staff_member.department == 'support' %}bg-emerald-50 text-emerald-700
+              {% elif staff_member.department == 'warehouse' %}bg-amber-50 text-amber-700
+              {% elif staff_member.department == 'accounting' %}bg-indigo-50 text-indigo-700
+              {% elif staff_member.department == 'marketing' %}bg-pink-50 text-pink-700
+              {% elif staff_member.department == 'it' %}bg-cyan-50 text-cyan-700
+              {% elif staff_member.department == 'hr' %}bg-rose-50 text-rose-700
+              {% else %}bg-gray-50 text-gray-600{% endif %}">
+              {{ staff_member.department_display }}
+            </span>
+          </td>
+          <td class="px-5 py-3.5 text-gray-500">{{ staff_member.phone|default:"-" }}</td>
+          <td class="px-5 py-3.5 text-gray-500">{{ staff_member.email|default:"-" }}</td>
+          <td class="px-5 py-3.5">
+            {% if staff_member.is_active %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>فعال
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>غیرفعال
+            </span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-1">
+              <!-- جزئیات برای همه قابل مشاهده است -->
+              <a href="{% url 'staff:staff-detail' staff_member.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                title="جزئیات">
+                <span class="material-icons text-lg">visibility</span>
+              </a>
+
+              <!-- ویرایش، تغییر وضعیت و حذف فقط برای مدیران -->
+              {% if is_manager %}
+              <a href="{% url 'staff:staff-edit' staff_member.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                title="ویرایش">
+                <span class="material-icons text-lg">edit</span>
+              </a>
+              {% if staff_member.user != request.user %}
+              <a href="{% url 'staff:staff-toggle-status' staff_member.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                title="{% if staff_member.is_active %}غیرفعال کردن{% else %}فعال کردن{% endif %}">
+                <span class="material-icons text-lg">
+                  {% if staff_member.is_active %}toggle_on{% else %}toggle_off{% endif %}
+                </span>
+              </a>
+              <a href="{% url 'staff:staff-delete' staff_member.pk %}"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                title="حذف">
+                <span class="material-icons text-lg">delete</span>
+              </a>
+              {% endif %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+              <div class="w-16 h-16 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mb-3">
+                <span class="material-icons text-3xl">people</span>
+              </div>
+              <p class="text-sm text-gray-500 mb-4">هیچ کارمندی ثبت نشده است.</p>
+              {% if is_manager %}
+              <a href="{% url 'staff:staff-create' %}" class="text-sm text-indigo-600 font-medium hover:underline">افزودن کارمند جدید</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- نمایش فیلترهای فعال -->
+{% if current_status or current_department or search_query %}
+<div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+  <span class="font-medium text-gray-700">فیلترهای فعال:</span>
+  {% if current_status %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    وضعیت: {% if current_status == 'active' %}فعال{% else %}غیرفعال{% endif %}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+  {% if current_department %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    دپارتمان: {{ current_department }}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'department' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+  {% if search_query %}
+  <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+    جستجو: {{ search_query }}
+    <a href="?{% for key, value in request.GET.items %}{% if key != 'search' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="hover:text-red-500">✕</a>
+  </span>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

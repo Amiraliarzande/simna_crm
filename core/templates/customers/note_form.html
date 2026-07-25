@@ -1,10 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}ویرایش یادداشت{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'customers:customer-detail' note.customer.pk %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">ویرایش یادداشت</h2>
+    <p class="text-xs text-gray-400 mt-0.5">یادداشت {{ note.customer.full_name }}</p>
+  </div>
+</div>
+
+<div class="max-w-lg mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+    
+    {% for field in form %}
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">{{ field.label }}</label>
+      {{ field }}
+    </div>
+    {% endfor %}
+
+    <div class="flex items-center gap-3 pt-2">
+      <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+        ذخیره تغییرات
+      </button>
+      <a href="{% url 'customers:customer-detail' note.customer.pk %}"
+        class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+        انصراف
+      </a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

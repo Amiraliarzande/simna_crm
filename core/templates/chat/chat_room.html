@@ -1,10 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}چت{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <a href="{% url 'chat:chat-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+      <span class="material-icons text-lg">arrow_forward</span>
+    </a>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">
+        {% if room.room_type == 'direct' %}
+          {% for p in room.participants.all %}
+            {% if p != user %}
+              {{ p.get_full_name|default:p.username }}
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          {{ room.name|default:room.get_room_type_display }}
+        {% endif %}
+      </h2>
+      <p class="text-xs text-gray-400">{{ room.participants.count }} شرکت‌کننده</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'chat:chat-toggle-pin' room.id %}"
+       class="{% if is_pinned %}bg-amber-100 text-amber-700{% else %}bg-gray-100 text-gray-600{% endif %} hover:bg-amber-50 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+      <span class="material-icons text-lg">push_pin</span>
+      {% if is_pinned %}آنپین{% else %}پین{% endif %}
+    </a>
+  </div>
+</div>
+
+<!-- محفظه پیام‌ها -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-[500px]">
+  <div class="flex flex-col h-full">
+    <!-- پیام‌ها -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-3" id="messageContainer">
+      {% for msg in messages %}
+      <div class="flex {% if msg.sender == user %}justify-end{% endif %}" id="message-{{ msg.id }}">
+        <div class="max-w-[70%] {% if msg.sender == user %}bg-indigo-50{% else %}bg-gray-50{% endif %} rounded-xl p-3 relative group">
+          {% if msg.sender != user %}
+          <p class="text-xs font-medium text-gray-600">{{ msg.sender.get_full_name|default:msg.sender.username }}</p>
+          {% endif %}
+          <p class="text-sm text-gray-700">{{ msg.message }}</p>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs text-gray-400">{{ msg.created_at|date:"H:i" }}</span>
+            {% if msg.is_edited %}
+            <span class="text-xs text-gray-400">(ویرایش شده)</span>
+            {% endif %}
+            {% if msg.id in saved_message_ids %}
+            <span class="text-xs text-amber-500">⭐ ذخیره شده</span>
+            {% endif %}
+          </div>
+
+          <!-- دکمه‌های عملیات روی پیام -->
+          <div class="absolute top-2 left-2 hidden group-hover:flex gap-1 bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+            <a href="{% url 'chat:chat-save-message' msg.id %}"
+               class="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition"
+               title="{% if msg.id in saved_message_ids %}حذف از ذخیره‌ها{% else %}ذخیره پیام{% endif %}">
+              <span class="material-icons text-sm">{% if msg.id in saved_message_ids %}star{% else %}star_outline{% endif %}</span>
+            </a>
+            {% if msg.sender == user %}
+            <a href="{% url 'chat:chat-edit-message' msg.id %}"
+               class="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+               title="ویرایش">
+              <span class="material-icons text-sm">edit</span>
+            </a>
+            <a href="{% url 'chat:chat-delete-message' msg.id %}"
+               class="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+               title="حذف">
+              <span class="material-icons text-sm">delete</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center text-gray-400 text-sm py-8">هنوز پیامی ارسال نشده است.</div>
+      {% endfor %}
+    </div>
+
+    <!-- فرم ارسال پیام -->
+    <div class="border-t border-gray-200 p-3">
+      <form method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+        {% csrf_token %}
+        <textarea name="message" rows="2" placeholder="پیام خود را وارد کنید..." 
+                  class="flex-1 border border-gray-200 rounded-lg px-3.5 py-2 text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition resize-none"></textarea>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+          <span class="material-icons">send</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

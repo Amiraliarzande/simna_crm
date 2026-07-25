@@ -1,10 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}داشبورد کارکنان{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-4">
+    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+      <span class="material-icons">dashboard</span>
+    </div>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">داشبورد کارکنان</h2>
+      <p class="text-xs text-gray-400 mt-0.5">خوش آمدید {{ user.get_full_name|default:user.username }}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'staff:staff-list' %}" 
+       class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">people</span>
+      مدیریت کارکنان
+    </a>
+  </div>
+</div>
+
+<!-- دو ستون: چت و یادداشت‌ها -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  
+  <!-- ============ ستون چپ: چت آنلاین ============ -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      <h3 class="font-bold text-gray-800 flex items-center gap-2">
+        <span class="material-icons text-indigo-500">chat</span>
+        چت آنلاین
+      </h3>
+      <a href="{% url 'chat:chat-start' %}" 
+         class="text-indigo-600 text-sm font-medium hover:underline flex items-center gap-1">
+        <span class="material-icons text-sm">add</span>
+        چت جدید
+      </a>
+    </div>
+    
+    <div class="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
+      {% if has_pinned_chat %}
+      <div class="bg-amber-50 px-4 py-1.5">
+        <p class="text-xs text-amber-700 flex items-center gap-1">
+          <span class="material-icons text-sm">push_pin</span>
+          پین شده
+        </p>
+      </div>
+      {% endif %}
+      
+      {% for item in chat_list %}
+      <a href="{% url 'chat:chat-room' item.id %}" 
+         class="block hover:bg-gray-50 transition {% if item.is_pinned %}bg-amber-50/30{% endif %}">
+        <div class="flex items-center justify-between p-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-full {% if item.is_pinned %}bg-amber-100 text-amber-600{% else %}bg-indigo-50 text-indigo-600{% endif %} flex items-center justify-center flex-shrink-0">
+              <span class="material-icons text-sm">{% if item.is_pinned %}push_pin{% else %}forum{% endif %}</span>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate">
+                {% if item.room.room_type == 'direct' %}
+                  {% for p in item.room.participants.all %}
+                    {% if p != user %}
+                      {{ p.get_full_name|default:p.username }}
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  {{ item.room.name|default:item.room.get_room_type_display }}
+                {% endif %}
+                {% if item.is_pinned %}
+                <span class="text-xs text-amber-600">📌</span>
+                {% endif %}
+              </p>
+              <p class="text-xs text-gray-400 truncate">
+                {% if item.last_msg %}
+                  {{ item.last_msg.sender.get_full_name|default:item.last_msg.sender.username }}: {{ item.last_msg.message|truncatechars:25 }}
+                {% else %}
+                  بدون پیام
+                {% endif %}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="text-xs text-gray-400">{{ item.room.updated_at|date:"H:i" }}</span>
+            {% if item.unread_count > 0 %}
+            <span class="bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ item.unread_count }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+      {% empty %}
+      <div class="py-8 text-center text-gray-400 text-sm">
+        <span class="material-icons text-3xl block mx-auto mb-2">chat</span>
+        هیچ چتی وجود ندارد.
+        <br>
+        <a href="{% url 'chat:chat-start' %}" class="text-indigo-600 font-medium hover:underline">شروع چت جدید</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <!-- ============ ستون راست: یادداشت‌ها ============ -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      <h3 class="font-bold text-gray-800 flex items-center gap-2">
+        <span class="material-icons text-amber-500">note</span>
+        یادداشت‌ها
+      </h3>
+      <div class="flex items-center gap-2">
+        <a href="{% url 'chat:note-archived-list' %}" 
+           class="text-gray-400 hover:text-gray-600 text-sm">
+          <span class="material-icons text-sm">archive</span>
+        </a>
+        <a href="{% url 'chat:note-create' %}" 
+           class="text-indigo-600 text-sm font-medium hover:underline flex items-center gap-1">
+          <span class="material-icons text-sm">add</span>
+          جدید
+        </a>
+      </div>
+    </div>
+    
+    <div class="p-3 space-y-3 max-h-[400px] overflow-y-auto">
+      <!-- یادداشت‌های پین شده -->
+      {% for note in pinned_notes %}
+      <div class="bg-amber-50 rounded-lg border border-amber-200 p-3">
+        {% include 'chat/note_card_small.html' with note=note %}
+      </div>
+      {% endfor %}
+      
+      <!-- یادداشت‌های عادی -->
+      {% for note in other_notes %}
+      <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+        {% include 'chat/note_card_small.html' with note=note %}
+      </div>
+      {% empty %}
+      <div class="py-8 text-center text-gray-400 text-sm">
+        <span class="material-icons text-3xl block mx-auto mb-2">note_add</span>
+        هیچ یادداشتی ثبت نشده است.
+        <br>
+        <a href="{% url 'chat:note-create' %}" class="text-indigo-600 font-medium hover:underline">ایجاد اولین یادداشت</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

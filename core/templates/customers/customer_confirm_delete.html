@@ -1,10 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}حذف مشتری{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'customers:customer-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">حذف مشتری</h2>
+    <p class="text-xs text-gray-400 mt-0.5">این عملیات غیرقابل بازگشت است</p>
+  </div>
+</div>
+
+<div class="max-w-lg mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <div class="flex flex-col items-center text-center mb-6">
+    <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-4">
+      <span class="material-icons text-2xl">warning</span>
+    </div>
+    <p class="text-sm text-gray-600">
+      آیا از حذف مشتری
+      <span class="font-bold text-gray-800">«{{ customer.full_name }}»</span>
+      مطمئن هستید؟
+    </p>
+    <p class="text-xs text-gray-400 mt-2">همه اطلاعات مرتبط با این مشتری حذف خواهد شد.</p>
+  </div>
+
+  <form method="post" class="flex items-center gap-3">
+    {% csrf_token %}
+    <button type="submit"
+      class="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5">
+      <span class="material-icons text-lg">delete</span>
+      بله، حذف شود
+    </button>
+    <a href="{% url 'customers:customer-list' %}"
+      class="flex-1 text-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition border border-gray-200">
+      انصراف
+    </a>
+  </form>
+</div>
+
+{% endblock %}

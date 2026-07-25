@@ -1,10 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'chat:note-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">{{ title }}</h2>
+    <p class="text-xs text-gray-400 mt-0.5">یادداشت خود را وارد کنید</p>
+  </div>
+</div>
+
+<div class="max-w-2xl mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+    
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">عنوان</label>
+      {{ form.title }}
+    </div>
+    
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">متن یادداشت</label>
+      {{ form.content }}
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">رنگ</label>
+            {{ form.color }}
+      </div>
+      <div class="flex items-end pb-1">
+        <label class="flex items-center gap-2 text-sm text-gray-600">
+          {{ form.is_pinned }}
+          پین شود
+        </label>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <button type="submit"
+        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+        {% if note %}ذخیره تغییرات{% else %}ایجاد یادداشت{% endif %}
+      </button>
+      <a href="{% url 'chat:note-list' %}"
+        class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+        انصراف
+      </a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

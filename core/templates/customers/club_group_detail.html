@@ -1,10 +1,140 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <a href="{% url 'customers:customer-club' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+      <span class="material-icons text-lg">arrow_forward</span>
+    </a>
+    <div>
+      <h2 class="text-lg font-bold text-gray-800">{{ group.name }}</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ customers|length }} عضو</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'customers:club-group-add-member' group.id %}"
+       class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">person_add</span>
+      افزودن عضو
+    </a>
+    <a href="{% url 'customers:club-group-edit' group.id %}"
+       class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">edit</span>
+      ویرایش
+    </a>
+  </div>
+</div>
+
+<!-- اطلاعات گروه -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">تعداد اعضا</p>
+    <p class="text-xl font-bold text-gray-800">{{ customers|length }}</p>
+  </div>
+  {% if group.discount_percent > 0 %}
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">درصد تخفیف</p>
+    <p class="text-xl font-bold text-emerald-600">{{ group.discount_percent }}%</p>
+  </div>
+  {% endif %}
+  {% if group.bonus_points > 0 %}
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">امتیاز پاداش</p>
+    <p class="text-xl font-bold text-amber-600">{{ group.bonus_points }}</p>
+  </div>
+  {% endif %}
+  {% if group.department %}
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <p class="text-xs text-gray-400 mb-1">دپارتمان</p>
+    <p class="text-sm font-medium text-gray-700">{{ group.department }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- توضیحات -->
+{% if group.description or group.bonus_description %}
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+  {% if group.description %}
+  <p class="text-sm text-gray-600">{{ group.description }}</p>
+  {% endif %}
+  {% if group.bonus_description %}
+  <div class="mt-2 p-3 bg-amber-50 rounded-lg">
+    <p class="text-xs text-amber-700 font-medium">🎁 پاداش و تخفیف:</p>
+    <p class="text-sm text-amber-600">{{ group.bonus_description }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- لیست اعضا -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 text-gray-500 text-xs">
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">نام</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">شرکت</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">تلفن</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">دپارتمان</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">وضعیت</th>
+          <th class="px-5 py-3 text-right font-medium whitespace-nowrap">عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+        <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition {% if customer.is_archived %}opacity-75 bg-gray-50/50{% endif %}">
+          <td class="px-5 py-3.5 font-medium text-gray-700">{{ customer.full_name }}</td>
+          <td class="px-5 py-3.5 text-gray-500">{{ customer.company|default:"-" }}</td>
+          <td class="px-5 py-3.5 text-gray-500">{{ customer.phone|default:"-" }}</td>
+          <td class="px-5 py-3.5 text-gray-500">{{ customer.department|default:"-" }}</td>
+          <td class="px-5 py-3.5">
+            {% if customer.is_archived %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              <span class="material-icons text-sm">archive</span>
+              بایگانی
+            </span>
+            {% elif customer.is_active %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              فعال
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              غیرفعال
+            </span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-1">
+              <a href="{% url 'customers:customer-detail' customer.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                 title="جزئیات">
+                <span class="material-icons text-lg">visibility</span>
+              </a>
+              <a href="{% url 'customers:customer-edit' customer.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                 title="ویرایش">
+                <span class="material-icons text-lg">edit</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+              <span class="material-icons text-4xl text-gray-300 mb-2">person_off</span>
+              <p class="text-sm text-gray-500">هیچ عضوی در این گروه ثبت نشده است.</p>
+              <a href="{% url 'customers:club-group-add-member' group.id %}" class="text-sm text-indigo-600 font-medium hover:underline mt-2">افزودن عضو</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

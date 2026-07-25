@@ -1,10 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}انتخاب نوع پروژه{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'projects:project-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">ایجاد پروژه جدید</h2>
+    <p class="text-xs text-gray-400 mt-0.5">نوع پروژه را انتخاب کنید</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+  <!-- کارت پروژه داخلی -->
+  <a href="{% url 'projects:project-create' 'internal' %}" 
+     class="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-8 hover:border-indigo-400 hover:shadow-lg transition-all duration-300 group">
+    <div class="flex flex-col items-center text-center">
+      <div class="w-20 h-20 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-100 transition">
+        <span class="material-icons text-4xl">business</span>
+      </div>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">پروژه داخلی</h3>
+      <p class="text-sm text-gray-500 leading-relaxed">
+        پروژه‌هایی که درون سازمان انجام می‌شوند.<br>
+        اعضای پروژه از بین کارکنان سازمان انتخاب می‌شوند.
+      </p>
+      <div class="mt-4 flex items-center gap-1 text-indigo-600 font-medium">
+        <span>انتخاب</span>
+        <span class="material-icons text-sm">arrow_forward</span>
+      </div>
+    </div>
+  </a>
+
+  <!-- کارت پروژه خارجی -->
+  <a href="{% url 'projects:project-create' 'external' %}" 
+     class="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-8 hover:border-purple-400 hover:shadow-lg transition-all duration-300 group">
+    <div class="flex flex-col items-center text-center">
+      <div class="w-20 h-20 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:bg-purple-100 transition">
+        <span class="material-icons text-4xl">handshake</span>
+      </div>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">پروژه خارجی</h3>
+      <p class="text-sm text-gray-500 leading-relaxed">
+        پروژه‌هایی که با مشتریان خارج از سازمان انجام می‌شوند.<br>
+        مشتری و اعضای پروژه مشخص می‌شوند.
+      </p>
+      <div class="mt-4 flex items-center gap-1 text-purple-600 font-medium">
+        <span>انتخاب</span>
+        <span class="material-icons text-sm">arrow_forward</span>
+      </div>
+    </div>
+  </a>
+</div>
+
+<div class="text-center mt-6">
+  <p class="text-xs text-gray-400">پس از انتخاب، می‌توانید اطلاعات کامل پروژه را وارد کنید.</p>
+</div>
+
+{% endblock %}

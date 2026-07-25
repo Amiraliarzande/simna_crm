@@ -2,19 +2,52 @@
 {% block title %}{{ customer.full_name }}{% endblock %}
 {% block content %}
 
-<div class="flex items-center gap-4">
-  <a href="{% url 'customers:customer-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
-    <span class="material-icons text-lg">arrow_forward</span>
-  </a>
-  <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 text-base font-bold flex items-center justify-center">
-    {{ customer.full_name|slice:":1"|upper }}
+<div class="flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <a href="{% url 'customers:customer-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+      <span class="material-icons text-lg">arrow_forward</span>
+    </a>
+    <div class="w-11 h-11 rounded-xl {% if customer.is_archived %}bg-gray-200 text-gray-500{% else %}bg-indigo-50 text-indigo-600{% endif %} text-base font-bold flex items-center justify-center">
+      {{ customer.full_name|slice:":1"|upper }}
+    </div>
+    <div>
+      <h2 class="text-lg font-bold {% if customer.is_archived %}text-gray-400{% else %}text-gray-800{% endif %}">{{ customer.full_name }}</h2>
+      <p class="text-xs text-gray-400 mt-0.5">{{ customer.company|default:"بدون شرکت" }}</p>
+    </div>
   </div>
-  <div>
-    <h2 class="text-lg font-bold text-gray-800">{{ customer.full_name }}</h2>
-    <p class="text-xs text-gray-400 mt-0.5">{{ customer.company|default:"بدون شرکت" }}</p>
+  <div class="flex items-center gap-2">
+    {% if customer.is_archived %}
+    <a href="{% url 'customers:customer-unarchive' customer.pk %}"
+      class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">restore</span>
+      بازگرداندن
+    </a>
+    <a href="{% url 'customers:customer-archive-delete' customer.pk %}"
+      class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">delete_forever</span>
+      حذف دائمی
+    </a>
+    {% else %}
+    <a href="{% url 'customers:customer-edit' customer.pk %}"
+      class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">edit</span>
+      ویرایش
+    </a>
+    <a href="{% url 'customers:customer-archive' customer.pk %}"
+      class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">archive</span>
+      بایگانی
+    </a>
+    <a href="{% url 'customers:customer-delete' customer.pk %}"
+      class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition">
+      <span class="material-icons text-lg">delete</span>
+      حذف
+    </a>
+    {% endif %}
   </div>
 </div>
 
+<!-- اطلاعات مشتری -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <div class="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5 h-fit">
     <div class="flex items-start gap-3">
@@ -39,20 +72,243 @@
       </div>
     </div>
     <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">person</span>
+      <div>
+        <p class="text-xs text-gray-400">کارشناس مسئول</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.owner|default:"-" }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">source</span>
+      <div>
+        <p class="text-xs text-gray-400">منبع آشنایی</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.source_display|default:"-" }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">group</span>
+      <div>
+        <p class="text-xs text-gray-400">گروه باشگاه</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.group_name|default:"-" }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">business</span>
+      <div>
+        <p class="text-xs text-gray-400">دپارتمان</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.department|default:"-" }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
       <span class="material-icons text-gray-400 text-lg">star</span>
       <div>
         <p class="text-xs text-gray-400">نوع مشتری</p>
         <p class="text-sm font-medium text-gray-700">{{ customer.get_customer_type_display }}</p>
+        {% if customer.is_potential %}
+        <div class="mt-1">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+            مشتری بالقوه
+          </span>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+            {% if customer.potential_status == 'new_lead' %}bg-blue-50 text-blue-700
+            {% elif customer.potential_status == 'initial_intro' %}bg-indigo-50 text-indigo-700
+            {% elif customer.potential_status == 'needs_assessment' %}bg-purple-50 text-purple-700
+            {% elif customer.potential_status == 'proposal_sent' %}bg-amber-50 text-amber-700
+            {% elif customer.potential_status == 'follow_up' %}bg-orange-50 text-orange-700
+            {% elif customer.potential_status == 'clarification' %}bg-rose-50 text-rose-700
+            {% elif customer.potential_status == 'sale' %}bg-emerald-50 text-emerald-700
+            {% elif customer.potential_status == 'archived' %}bg-gray-50 text-gray-700
+            {% elif customer.potential_status == 'other' %}bg-gray-50 text-gray-700
+            {% else %}bg-gray-50 text-gray-600{% endif %}">
+            {{ customer.potential_status_display }}
+          </span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">credit_card</span>
+      <div>
+        <p class="text-xs text-gray-400">سقف اعتبار</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.credit_limit|default:"۰" }} تومان</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">shopping_cart</span>
+      <div>
+        <p class="text-xs text-gray-400">کل خرید</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.total_purchases|default:"۰" }} تومان</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">people</span>
+      <div>
+        <p class="text-xs text-gray-400">تعداد مراجعه</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.visit_count|default:"۰" }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">toggle_on</span>
+      <div>
+        <p class="text-xs text-gray-400">وضعیت</p>
+        <p class="text-sm font-medium">
+          {% if customer.is_archived %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            <span class="material-icons text-sm">archive</span>
+            بایگانی
+            {% if customer.archived_at %}
+            <span class="text-xs text-gray-400">({{ customer.archived_at|date:"Y/m/d" }})</span>
+            {% endif %}
+          </span>
+          {% if customer.archive_reason %}
+          <p class="text-xs text-gray-400 mt-1">دلیل: {{ customer.archive_reason }}</p>
+          {% endif %}
+          {% if customer.archived_by %}
+          <p class="text-xs text-gray-400">بایگانی کننده: {{ customer.archived_by.username }}</p>
+          {% endif %}
+          {% elif customer.is_active %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            فعال
+          </span>
+          {% else %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            غیرفعال
+          </span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">history</span>
+      <div>
+        <p class="text-xs text-gray-400">آخرین بررسی</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.last_check_date|date:"Y/m/d H:i"|default:"-" }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">calendar_today</span>
+      <div>
+        <p class="text-xs text-gray-400">تاریخ ثبت</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.created_at|date:"Y/m/d H:i" }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="material-icons text-gray-400 text-lg">update</span>
+      <div>
+        <p class="text-xs text-gray-400">آخرین ویرایش</p>
+        <p class="text-sm font-medium text-gray-700">{{ customer.updated_at|date:"Y/m/d H:i" }}</p>
       </div>
     </div>
   </div>
 
-  <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-    <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-      <span class="material-icons text-indigo-500 text-lg">description</span>
-      توضیحات
-    </h3>
-    <p class="text-sm text-gray-500 leading-7">{{ customer.address|default:"آدرسی ثبت نشده است." }}</p>
+  <!-- بخش راست: آدرس و یادداشت‌ها -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- آدرس -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="material-icons text-indigo-500 text-lg">description</span>
+        آدرس
+      </h3>
+      <p class="text-sm text-gray-500 leading-7">{{ customer.address|default:"آدرسی ثبت نشده است." }}</p>
+    </div>
+
+    <!-- یادداشت‌ها -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
+          <span class="material-icons text-indigo-500 text-lg">note</span>
+          یادداشت‌ها ({{ notes|length }})
+        </h3>
+        <button onclick="document.getElementById('noteForm').classList.toggle('hidden')"
+                class="text-indigo-600 text-sm font-medium hover:underline flex items-center gap-1">
+          <span class="material-icons text-sm">add</span>
+          افزودن یادداشت
+        </button>
+      </div>
+
+      <!-- فرم یادداشت جدید -->
+      <div id="noteForm" class="hidden mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+        <form method="POST" class="space-y-3">
+          {% csrf_token %}
+          <input type="hidden" name="note_submit" value="1">
+          {{ note_form.note }}
+          <div class="flex items-center gap-2">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+              ثبت یادداشت
+            </button>
+            <button type="button" onclick="document.getElementById('noteForm').classList.add('hidden')"
+                    class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+              انصراف
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- لیست یادداشت‌ها -->
+      <div class="space-y-3">
+        {% for note in notes %}
+        <div class="{% if note.is_pinned %}bg-amber-50 border-amber-200{% else %}bg-gray-50 border-gray-100{% endif %} rounded-xl p-4 border hover:shadow-sm transition">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <p class="text-sm text-gray-700 leading-7 whitespace-pre-wrap">{{ note.note }}</p>
+              <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+                <span class="flex items-center gap-1">
+                  <span class="material-icons text-sm">person</span>
+                  {{ note.created_by|default:"کارشناس" }}
+                </span>
+                <span>•</span>
+                <span class="flex items-center gap-1">
+                  <span class="material-icons text-sm">schedule</span>
+                  {{ note.created_at|date:"Y/m/d H:i" }}
+                </span>
+                {% if note.is_edited %}
+                <span class="text-amber-500 flex items-center gap-1">
+                  <span class="material-icons text-sm">edit</span>
+                  ویرایش شده {{ note.updated_at|date:"Y/m/d H:i" }}
+                </span>
+                {% endif %}
+                {% if note.is_pinned %}
+                <span class="text-amber-600 flex items-center gap-1">
+                  <span class="material-icons text-sm">push_pin</span>
+                  پین شده
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="flex items-center gap-1 mr-2 shrink-0">
+              <a href="{% url 'customers:note-toggle-pin' note.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center {% if note.is_pinned %}text-amber-600 hover:text-amber-800{% else %}text-gray-400 hover:text-amber-600{% endif %} hover:bg-amber-50 transition"
+                 title="{% if note.is_pinned %}آنپین{% else %}پین{% endif %}">
+                <span class="material-icons text-lg">{% if note.is_pinned %}push_pin{% else %}push_pin{% endif %}</span>
+              </a>
+              <a href="{% url 'customers:note-edit' note.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                 title="ویرایش">
+                <span class="material-icons text-lg">edit</span>
+              </a>
+              <a href="{% url 'customers:note-delete' note.pk %}"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                 title="حذف">
+                <span class="material-icons text-lg">delete</span>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-8 text-gray-400 text-sm">
+          <span class="material-icons text-3xl block mx-auto mb-2">note_add</span>
+          هنوز یادداشتی ثبت نشده است.
+          <br>
+          <button onclick="document.getElementById('noteForm').classList.toggle('hidden')"
+                  class="text-indigo-600 text-sm font-medium hover:underline mt-2">
+            اولین یادداشت را اضافه کنید
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 </div>
 

@@ -1,10 +1,179 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'tasks:task-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">{{ title }}</h2>
+    <p class="text-xs text-gray-400 mt-0.5">اطلاعات وظیفه را وارد کنید</p>
+  </div>
+</div>
+
+<div class="max-w-3xl mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" enctype="multipart/form-data" class="space-y-5" id="taskForm">
+    {% csrf_token %}
+
+    <!-- عنوان -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">عنوان وظیفه</label>
+      {{ form.title }}
+      {% if form.title.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.title.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- توضیحات -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">توضیحات</label>
+      {{ form.description }}
+      {% if form.description.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.description.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- اولویت و وضعیت -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">اولویت</label>
+        {{ form.priority }}
+        {% if form.priority.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.priority.errors|first }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">وضعیت</label>
+        {{ form.status }}
+        {% if form.status.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.status.errors|first }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- تاریخ‌ها -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تاریخ شروع</label>
+        {{ form.start_date }}
+        {% if form.start_date.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.start_date.errors|first }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تاریخ سررسید</label>
+        {{ form.due_date }}
+        {% if form.due_date.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.due_date.errors|first }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- دسترسی -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">دسترسی</label>
+      {{ form.visibility }}
+      {% if form.visibility.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.visibility.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- اختصاص به افراد -->
+    <div id="assignedToDiv">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">اختصاص به افراد</label>
+      {{ form.assigned_to }}
+      {% if form.assigned_to.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.assigned_to.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1">برای انتخاب چند نفر، کلید Ctrl را نگه دارید</p>
+    </div>
+
+    <!-- اختصاص به دپارتمان -->
+    <div id="assignedDepartmentDiv">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">اختصاص به دپارتمان</label>
+      {{ form.assigned_department }}
+      {% if form.assigned_department.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.assigned_department.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- فایل پیوست -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">فایل پیوست</label>
+      {{ form.attachment }}
+      {% if form.attachment.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.attachment.errors|first }}</p>
+      {% endif %}
+      {% if task and task.attachment %}
+      <div class="mt-2">
+        <a href="{{ task.attachment.url }}" target="_blank" class="text-indigo-600 hover:underline text-sm">📎 فایل فعلی</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- یادداشت‌ها -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">یادداشت‌ها</label>
+      {{ form.notes }}
+      {% if form.notes.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.notes.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <div class="flex items-center gap-3 pt-2 border-t border-gray-200">
+      <button type="submit" id="submitBtn"
+        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+        {% if task %}ذخیره تغییرات{% else %}ایجاد وظیفه{% endif %}
+      </button>
+      <a href="{% url 'tasks:task-list' %}"
+        class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+        انصراف
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const visibilitySelect = document.getElementById('id_visibility');
+  const assignedToDiv = document.getElementById('assignedToDiv');
+  const assignedDepartmentDiv = document.getElementById('assignedDepartmentDiv');
+
+  function toggleFields() {
+    const value = visibilitySelect.value;
+
+    // مخفی کردن همه
+    assignedToDiv.style.display = 'none';
+    assignedDepartmentDiv.style.display = 'none';
+
+    if (value === 'assigned') {
+      // فقط افراد اختصاص داده شده
+      assignedToDiv.style.display = 'block';
+    } else if (value === 'department') {
+      // فقط دپارتمان
+      assignedDepartmentDiv.style.display = 'block';
+    } else if (value === 'public') {
+      // همه - هیچ چیزی نمایش داده نشود
+    } else {
+      // private (فقط من) - هیچ چیزی نمایش داده نشود
+    }
+  }
+
+  if (visibilitySelect) {
+    visibilitySelect.addEventListener('change', toggleFields);
+    toggleFields(); // اجرا در ابتدا
+  }
+});
+
+// نمایش پیام‌های خطا در کنسول برای دیباگ
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('taskForm');
+  form.addEventListener('submit', function(e) {
+    const visibility = document.getElementById('id_visibility').value;
+    console.log('Visibility selected:', visibility);
+  });
+});
+</script>
+
+{% endblock %}

@@ -1,10 +1,207 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-4">
+  <a href="{% url 'projects:project-list' %}" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+    <span class="material-icons text-lg">arrow_forward</span>
+  </a>
+  <div>
+    <h2 class="text-lg font-bold text-gray-800">{{ title }}</h2>
+    <p class="text-xs text-gray-400 mt-0.5">
+      پروژه
+      {% if project_type == 'internal' %}
+      <span class="text-blue-600 font-medium">داخلی</span>
+      {% else %}
+      <span class="text-purple-600 font-medium">خارجی</span>
+      {% endif %}
+      - اطلاعات را وارد کنید
+    </p>
+  </div>
+</div>
+
+<div class="max-w-3xl mx-auto w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+  <form method="post" class="space-y-5" id="projectForm">
+    {% csrf_token %}
+
+    <!-- شماره و عنوان پروژه -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">شماره پروژه</label>
+        {{ form.project_number }}
+        {% if form.project_number.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.project_number.errors|first }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">عنوان پروژه</label>
+        {{ form.title }}
+        {% if form.title.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.title.errors|first }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- توضیحات -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">توضیحات</label>
+      {{ form.description }}
+      {% if form.description.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.description.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- مشتری اصلی (فقط برای پروژه‌های خارجی) -->
+    {% if project_type == 'external' %}
+    <div id="customerDiv">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">مشتری اصلی</label>
+      {{ form.customer }}
+      {% if form.customer.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.customer.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1">مشتری اصلی این پروژه را انتخاب کنید</p>
+    </div>
+    {% endif %}
+
+    <!-- وضعیت -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">وضعیت</label>
+      {{ form.status }}
+      {% if form.status.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.status.errors|first }}</p>
+      {% endif %}
+    </div>
+
+    <!-- تاریخ‌ها -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تاریخ شروع</label>
+        {{ form.start_date }}
+        {% if form.start_date.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.start_date.errors|first }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-500 mb-1.5 block">تاریخ پایان</label>
+        {{ form.end_date }}
+        {% if form.end_date.errors %}
+        <p class="text-xs text-rose-500 mt-1">{{ form.end_date.errors|first }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- اعضای پروژه (کارمندان) -->
+    <div id="membersDiv">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block" id="membersLabel">اعضای پروژه (کارمندان)</label>
+      {{ form.members }}
+      {% if form.members.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.members.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1" id="membersHelp">{{ form.members.help_text }}</p>
+    </div>
+
+    <!-- مشتریان عضو پروژه (فقط برای پروژه‌های خارجی) -->
+    {% if project_type == 'external' %}
+    <div id="customerMembersDiv">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">مشتریان عضو پروژه</label>
+      {{ form.customer_members }}
+      {% if form.customer_members.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.customer_members.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1">{{ form.customer_members.help_text }}</p>
+    </div>
+    {% endif %}
+
+    <!-- دپارتمان‌های دسترسی (فقط برای حالت department) -->
+    <div id="departmentsDiv" style="display: none;">
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">دپارتمان‌های دسترسی</label>
+      {{ form.departments }}
+      {% if form.departments.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.departments.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1">کاربران دپارتمان‌های انتخاب شده می‌توانند این پروژه را مشاهده کنند.</p>
+    </div>
+
+    <!-- دسترسی -->
+    <div>
+      <label class="text-xs font-medium text-gray-500 mb-1.5 block">دسترسی</label>
+      {{ form.visibility }}
+      {% if form.visibility.errors %}
+      <p class="text-xs text-rose-500 mt-1">{{ form.visibility.errors|first }}</p>
+      {% endif %}
+      <p class="text-xs text-gray-400 mt-1">
+        <span id="visibilityHint">
+          با انتخاب هر گزینه، دسترسی مربوطه فعال می‌شود.
+        </span>
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2 border-t border-gray-200">
+      <button type="submit"
+        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+        {% if project %}ذخیره تغییرات{% else %}ایجاد پروژه{% endif %}
+      </button>
+      <a href="{% url 'projects:project-list' %}"
+        class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+        انصراف
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const visibilitySelect = document.getElementById('id_visibility');
+  const membersDiv = document.getElementById('membersDiv');
+  const departmentsDiv = document.getElementById('departmentsDiv');
+  const customerDiv = document.getElementById('customerDiv');
+  const customerMembersDiv = document.getElementById('customerMembersDiv');
+  const membersLabel = document.getElementById('membersLabel');
+  const membersHelp = document.getElementById('membersHelp');
+  const hint = document.getElementById('visibilityHint');
+
+  function toggleFields() {
+    const value = visibilitySelect.value;
+
+    // همیشه members نمایش داده شود
+    membersDiv.style.display = 'block';
+    departmentsDiv.style.display = 'none';
+
+    // بازگرداندن عنوان‌ها
+    membersLabel.textContent = 'اعضای پروژه (کارمندان)';
+    membersHelp.textContent = 'برای انتخاب چند نفر، کلید Ctrl را نگه دارید';
+
+    if (value === 'private') {
+      // خودم - اعضا نمایش داده شود اما اختیاری
+      hint.textContent = 'فقط خودتان می‌توانید این پروژه را مشاهده کنید. (اعضا اختیاری)';
+      membersHelp.textContent = 'اعضای انتخاب شده نیز دسترسی خواهند داشت (اختیاری)';
+    } else if (value === 'assigned') {
+      // اعضا - نمایش فیلد انتخاب اعضا
+      hint.textContent = 'فقط اعضای انتخاب شده می‌توانند این پروژه را مشاهده کنند.';
+    } else if (value === 'department') {
+      // دپارتمان - نمایش فیلد انتخاب دپارتمان
+      departmentsDiv.style.display = 'block';
+      hint.textContent = 'کاربران دپارتمان‌های انتخاب شده می‌توانند این پروژه را مشاهده کنند.';
+      membersLabel.textContent = 'اعضای پروژه (کارمندان) - اختیاری';
+      membersHelp.textContent = 'در صورت نیاز، اعضای خاصی را نیز اضافه کنید.';
+    }
+  }
+
+  visibilitySelect.addEventListener('change', toggleFields);
+
+  // اجرا در ابتدا
+  toggleFields();
+
+  // اگر پروژه داخلی است، مشتری را مخفی کن
+  {% if project_type == 'internal' %}
+    if (customerDiv) {
+      customerDiv.style.display = 'none';
+    }
+    if (customerMembersDiv) {
+      customerMembersDiv.style.display = 'none';
+    }
+  {% endif %}
+});
+</script>
+
+{% endblock %}
